@@ -26,6 +26,23 @@ Overpower sur esquive est revalorisé (Impale), Whirlwind et Hamstring
 réservent toujours la rage d'un Mortal Strike imminent, et Execute prime
 sur Whirlwind sous 20 %. Piercing Howl est activé par défaut.
 
+## Profil PvP : compos visées — 2v2 Warrior/Rdruid, 3v3 WLD
+
+Le profil intègre le support des deux compos :
+
+- **Intervene automatique sur le druide** : le druide est auto-détecté
+  (party1/party2), et quand il encaisse sous le seuil de PV réglable
+  (60 % par défaut), la rotation bascule en Posture défensive et
+  Intervene sur lui (toggle `Intervene-Healer`).
+- **Kick @focus** : mettez le healer ou le caster adverse en focus —
+  Pummel l'interrompt sans jamais changer de cible (toggle
+  `Interrupt-Focus`). Indispensable en WLD pour rester sur la kill target
+  pendant que le lock fear/dot.
+- **Cri au choix** : dropdown Battle Shout / Commanding Shout / OFF —
+  Commanding Shout est utile contre les doubles DPS.
+- Le Spell Reflection surveille aussi le focus (fears du démoniste
+  adverse, cyclones, polymorphes…).
+
 ## Profil PvP : installation
 
 1. Dans TellMeWhen, dupliquer un profil `[GGL]` existant (pour récupérer

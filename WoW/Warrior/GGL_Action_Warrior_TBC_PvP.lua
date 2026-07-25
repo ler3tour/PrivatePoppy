@@ -88,6 +88,8 @@ Action[Action.PlayerClass] = {
     SweepingStrikes           = Create({ Type = "Spell", ID = 12328, isTalent = true                           }),
     -- PvP toolkit
     Pummel                    = Create({ Type = "Spell", ID = 6552,  useMaxRank = true                         }),
+    PummelFocus               = Create({ Type = "Spell", ID = 6552,  useMaxRank = true, Desc = "Focus",
+                                         Macro = "/cast [@focus]spell:thisID"                                  }),
     ShieldBash                = Create({ Type = "Spell", ID = 72,    useMaxRank = true                         }),
     SpellReflection           = Create({ Type = "Spell", ID = 23920                                            }), -- TBC only
     Disarm                    = Create({ Type = "Spell", ID = 676,                Click = { macrobefore = "/stopcasting" } }),
@@ -97,6 +99,10 @@ Action[Action.PlayerClass] = {
     Charge                    = Create({ Type = "Spell", ID = 100,   useMaxRank = true                         }),
     Intercept                 = Create({ Type = "Spell", ID = 20252, useMaxRank = true                         }),
     Intervene                 = Create({ Type = "Spell", ID = 3411                                             }), -- TBC only
+    InterveneParty1           = Create({ Type = "Spell", ID = 3411,  Desc = "@party1",
+                                         Macro = "/cast [@party1]spell:thisID"                                 }),
+    InterveneParty2           = Create({ Type = "Spell", ID = 3411,  Desc = "@party2",
+                                         Macro = "/cast [@party2]spell:thisID"                                 }),
     ConcussionBlow            = Create({ Type = "Spell", ID = 12809, isTalent = true, Click = { macrobefore = "/stopcasting" } }),
     -- Defense
     ShieldBlock               = Create({ Type = "Spell", ID = 2565                                             }),
@@ -183,7 +189,7 @@ local Temp = {
     AuraForFear               = { "TotalImun", "DamagePhysImun", "CCTotalImun", "FearImun" },
     AuraForDisarm             = { "TotalImun", "DamagePhysImun", "CCTotalImun" },
     AuraForStun               = { "TotalImun", "CCTotalImun", "StunImun" },
-    ReflectUnits              = { "target", "mouseover", "arena1", "arena2", "arena3", "arena4", "arena5" },
+    ReflectUnits              = { "target", "focus", "mouseover", "arena1", "arena2", "arena3", "arena4", "arena5" },
 }
 
 local function GetStance()
@@ -218,6 +224,17 @@ end
 -- Rage conservee par Tactical Mastery lors d'un changement de stance
 local function StanceKeepRage()
     return A.TacticalMastery:GetTalentRank() * 5
+end
+
+-- Trouve le soigneur du groupe (le druide en 2v2/3v3), retourne
+-- l'unitID party et l'objet Intervene correspondant
+local function GetHealerUnit()
+    if Unit("party1"):Class() == "DRUID" then
+        return "party1", A.InterveneParty1
+    end
+    if Unit("party2"):Class() == "DRUID" then
+        return "party2", A.InterveneParty2
+    end
 end
 
 -- Cherche un ennemi en train de caster SUR NOUS (pour Spell Reflection)
@@ -333,6 +350,32 @@ A[3] = function(icon)
         end
     end
 
+    -- Pummel @focus : kick le focus sans changer de cible (WLD : mettre
+    -- le healer/caster adverse en focus)
+    if ToggleOr("Interrupt-Focus", true) and inStance == 3 and IsUnitEnemy("focus") and InMelee("focus") then
+        local focusCastLeft, _, _, _, focusNotInterruptAble = Unit("focus"):IsCastingRemains()
+        if focusCastLeft and focusCastLeft > GetPing() + 0.1 and not focusNotInterruptAble and A.PummelFocus:IsReadyByPassCastGCD("focus") and A.Pummel:GetCooldown() == 0 and myRage >= A.Pummel:GetSpellPowerCostCache() and A.Pummel:AbsentImun("focus", Temp.AuraForKick) then
+            return A.PummelFocus:Show(icon)
+        end
+    end
+
+    ----------------------------------------------------------------------
+    -- [[ INTERVENE : proteger le druide ]]
+    -- 2v2/3v3 : Intervene sur le heal quand il encaisse (Def Stance requise)
+    ----------------------------------------------------------------------
+    if ToggleOr("Intervene-Healer", true) and inCombat and A.Intervene:GetCooldown() == 0 then
+        local healerUnit, interveneObject = GetHealerUnit()
+        if healerUnit and not Unit(healerUnit):IsDead() and Unit(healerUnit):GetRange() <= 25 and Unit(healerUnit):HealthPercent() <= ToggleOr("Intervene-HealerHP", 60) and Unit(healerUnit):GetRealTimeDMG() > 0 then
+            if inStance == 2 and myRage >= A.Intervene:GetSpellPowerCostCache() then
+                return interveneObject:Show(icon)
+            end
+
+            if inStance ~= 2 and A.DefensiveStance:IsReady("player") then
+                return A.DefensiveStance:Show(icon)
+            end
+        end
+    end
+
     ----------------------------------------------------------------------
     -- [[ DISARM ]] trigger : OFF / ON COOLDOWN / ON BURST
     ----------------------------------------------------------------------
@@ -347,9 +390,10 @@ A[3] = function(icon)
         end
     end
 
-    -- BattleShout : hors combat / pas de cible
-    if (not inCombat or (not isTarget and not isMouse)) and A.BattleShout:IsReady("player") and Unit("player"):HasBuffs(A.BattleShout.ID) <= GetGCD() + GetCurrentGCD() then
-        return A.BattleShout:Show(icon)
+    -- Shout : Battle ou Commanding selon le dropdown UI
+    local shoutToUse = ToggleOr("ShoutToUse", "BattleShout")
+    if shoutToUse ~= "OFF" and A[shoutToUse] and (not inCombat or (not isTarget and not isMouse)) and A[shoutToUse]:IsReady("player") and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() then
+        return A[shoutToUse]:Show(icon)
     end
 
     -- Return : pas de cible primaire
