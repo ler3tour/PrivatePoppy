@@ -43,6 +43,22 @@ Le profil intègre le support des deux compos :
 - Le Spell Reflection surveille aussi le focus (fears du démoniste
   adverse, cyclones, polymorphes…).
 
+## Améliorations issues des guides arène
+
+- **Berserker Rage préventif** : quand un Fear ou Hurlement de terreur est
+  *en cours de cast* sur vous, Rage berserker part avant l'impact
+  (immunité 10 s), avec stance dance d'urgence si besoin. Le Spell
+  Reflection reste prioritaire quand il est disponible (renvoyer le Fear
+  vaut mieux que l'immunité).
+- **Rend anti-restealth** : Pourfendre est maintenu en permanence sur les
+  Voleurs et Druides pour interdire le retour en camouflage, avec bascule
+  en Posture de combat quand Tactical Mastery conserve la rage.
+- **Filtre Spell Reflection** : par défaut, le swap bouclier ne se
+  déclenche que pour les sorts qui le valent (Fear, Polymorphe, Cyclone,
+  Sarments, gros nukes…) — liste localisée via `GetSpellInfo`, donc
+  compatible client français. Désactivable pour renvoyer n'importe quel
+  cast.
+
 ## Profil PvP : installation
 
 1. Dans TellMeWhen, dupliquer un profil `[GGL]` existant (pour récupérer

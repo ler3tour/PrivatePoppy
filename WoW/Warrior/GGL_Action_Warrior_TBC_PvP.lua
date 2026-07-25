@@ -29,6 +29,7 @@ local strsub                                         = _G.strsub
 local UnitGUID                                       = _G.UnitGUID
 local UnitIsUnit                                     = _G.UnitIsUnit
 local GetShapeshiftForm                              = _G.GetShapeshiftForm
+local GetSpellInfo                                   = _G.GetSpellInfo
 local CombatLogGetCurrentEventInfo                   = _G.CombatLogGetCurrentEventInfo
 
 local TMW                                            = _G.TMW
@@ -226,6 +227,32 @@ local function StanceKeepRage()
     return A.TacticalMastery:GetTalentRank() * 5
 end
 
+-- Sorts prioritaires pour le Spell Reflection et fears a anticiper
+-- (noms localises via GetSpellInfo, compatibles client FR)
+local ReflectImportant = {}
+local FearCasts        = {}
+do
+    -- Fear, Howl of Terror, Polymorph, Cyclone, Entangling Roots,
+    -- Frostbolt, Fireball, Pyroblast, Shadow Bolt, Soul Fire, Immolate,
+    -- Mind Control, Mind Blast, Starfire, Wrath, Lightning Bolt, Chain Lightning
+    local reflectIDs = { 5782, 5484, 118, 33786, 339, 116, 133, 11366, 686, 6353, 348, 605, 8092, 2912, 5176, 403, 421 }
+    for i = 1, #reflectIDs do
+        local name = GetSpellInfo(reflectIDs[i])
+        if name then
+            ReflectImportant[name] = true
+        end
+    end
+
+    -- Fear, Howl of Terror
+    local fearIDs = { 5782, 5484 }
+    for i = 1, #fearIDs do
+        local name = GetSpellInfo(fearIDs[i])
+        if name then
+            FearCasts[name] = true
+        end
+    end
+end
+
 -- Trouve le soigneur du groupe (le druide en 2v2/3v3), retourne
 -- l'unitID party et l'objet Intervene correspondant
 local function GetHealerUnit()
@@ -238,11 +265,26 @@ local function GetHealerUnit()
 end
 
 -- Cherche un ennemi en train de caster SUR NOUS (pour Spell Reflection)
+-- Avec le toggle SpellReflection-OnlyImportant : uniquement les sorts
+-- qui valent le swap (CC et gros nukes)
 local function GetReflectUnit()
+    local onlyImportant = GetToggle(2, "SpellReflection-OnlyImportant")
     for _, unitID in ipairs(Temp.ReflectUnits) do
         if IsUnitEnemy(unitID) and UnitIsUnit(unitID .. "target", "player") then
-            local castLeft = Unit(unitID):IsCastingRemains()
-            if castLeft and castLeft > GetPing() + 0.1 then
+            local castLeft, _, _, castName = Unit(unitID):IsCastingRemains()
+            if castLeft and castLeft > GetPing() + 0.1 and (not onlyImportant or (castName and ReflectImportant[castName])) then
+                return unitID, castLeft
+            end
+        end
+    end
+end
+
+-- Fear en cours de cast sur nous : Fear (cible) ou Howl of Terror (zone)
+local function GetIncomingFearUnit()
+    for _, unitID in ipairs(Temp.ReflectUnits) do
+        if IsUnitEnemy(unitID) then
+            local castLeft, _, _, castName = Unit(unitID):IsCastingRemains()
+            if castLeft and castLeft > GetPing() + 0.1 and castName and FearCasts[castName] and (UnitIsUnit(unitID .. "target", "player") or Unit(unitID):GetRange() <= 10) then
                 return unitID, castLeft
             end
         end
@@ -328,6 +370,25 @@ A[3] = function(icon)
     -- Retour dual-wield / 2H apres le reflect (hors fenetre de cast ennemie)
     if ToggleOr("SpellReflection-AutoSwap", true) and Player:HasShield(true) and not GetReflectUnit() and (A.SpellReflection:GetCooldown() > 3 or Unit("player"):HasBuffs(A.SpellReflection.ID, true) > 0 or not ToggleOr("UseSpellReflection", true)) then
         return A.SwapWeapon:Show(icon)
+    end
+
+    ----------------------------------------------------------------------
+    -- [[ BERSERKER RAGE PREVENTIF ]]
+    -- Un Fear/Howl of Terror part sur nous : immunite AVANT l'impact
+    -- (les guides : "use Berserker Rage BEFORE they cast Fear")
+    ----------------------------------------------------------------------
+    if ToggleOr("UseBerserkerRage-PreFear", true) and A.BerserkerRage:GetCooldown() == 0 and Unit("player"):HasBuffs(A.BerserkerRage.ID, true) == 0 and Unit("player"):HasBuffs(A.DeathWish.ID, true) == 0 then
+        local fearUnit, fearCastLeft = GetIncomingFearUnit()
+        if fearUnit then
+            if inStance == 3 and A.BerserkerRage:IsReadyByPassCastGCD("player") then
+                return A.BerserkerRage:Show(icon)
+            end
+
+            -- Stance dance d'urgence : etre feared coute plus cher que la rage
+            if inStance ~= 3 and fearCastLeft > 0.8 and A.BerserkerStance:IsReady("player") then
+                return A.BerserkerStance:Show(icon)
+            end
+        end
     end
 
     ----------------------------------------------------------------------
@@ -529,6 +590,21 @@ A[3] = function(icon)
     -- VictoryRush
     if ToggleOr("UseVictoryRush", true) and A.VictoryRush:IsReady(isTarget) and A.VictoryRush:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.VictoryRush:Show(icon)
+    end
+
+    -- Rend : anti-restealth sur Rogue/Druide ("keep Rend up 100%"),
+    -- stance dance vers Battle si la rage ne se perd pas
+    if ToggleOr("UseRend", true) and Unit(isTarget):IsPlayer() and Unit(isTarget):CombatTime() > 0 then
+        local targetClass = Unit(isTarget):Class()
+        if (targetClass == "ROGUE" or targetClass == "DRUID") and Unit(isTarget):HasDeBuffs(A.Rend.ID, true) <= GetGCD() + GetCurrentGCD() and myRage >= A.Rend:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Rend:AbsentImun(isTarget, Temp.AttackTypes) then
+            if (inStance == 1 or inStance == 2) and A.Rend:IsReady(isTarget) then
+                return A.Rend:Show(icon)
+            end
+
+            if inStance == 3 and A.Rend:GetCooldown() == 0 and A.BattleStance:IsReady("player") and myRage - StanceKeepRage() <= 10 + A.Rend:GetSpellPowerCostCache() then
+                return A.BattleStance:Show(icon)
+            end
+        end
     end
 
     -- Hamstring : uptime du snare sur les joueurs, en reservant la rage

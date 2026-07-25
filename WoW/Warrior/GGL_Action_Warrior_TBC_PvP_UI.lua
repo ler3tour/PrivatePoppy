@@ -64,6 +64,18 @@ local L                            = {
         frFR = WR.SpellReflection:Info() .. "\nSwap bouclier auto" },
     REFLECT_SWAPTT                 = { enUS = "Equips 1H + shield automatically for the reflect, then swaps back\nRequires the SwapWeapon macro (create it in /action) and a shield in bags",
         frFR = "Equipe automatiquement 1M + bouclier pour le renvoi, puis re-swap\nNecessite la macro SwapWeapon (a creer dans /action) et un bouclier dans les sacs" },
+    REFLECT_ONLYIMPORTANT          = { enUS = WR.SpellReflection:Info() .. "\nOnly CC & big nukes",
+        frFR = WR.SpellReflection:Info() .. "\nSeulement CC & gros sorts" },
+    REFLECT_ONLYIMPORTANTTT        = { enUS = "Only starts the shield swap for spells worth reflecting: Fear, Polymorph, Cyclone, Entangling Roots, Frostbolt, Fireball, Pyroblast, Shadow Bolt, Soul Fire, Mind Control...\nOFF = reflects any cast targeting you",
+        frFR = "Ne lance le swap bouclier que pour les sorts qui valent le renvoi : Fear, Polymorphe, Cyclone, Sarments, Eclair de givre, Boule de feu, Pyrobarrage, Trait de l'ombre, Feu de l'ame, Controle mental...\nOFF = renvoie n'importe quel cast qui vous cible" },
+    BERSERKERRAGE_PREFEAR          = { enUS = WR.BerserkerRage:Info() .. "\nPre-cast vs Fear",
+        frFR = WR.BerserkerRage:Info() .. "\nAnticipation anti-Fear" },
+    BERSERKERRAGE_PREFEARTT        = { enUS = "Uses Berserker Rage WHILE the enemy Fear/Howl of Terror is still casting on you (10s immunity), with emergency stance dance\nMacro toggle: /run Action.SetToggle({2, \"UseBerserkerRage-PreFear\"})",
+        frFR = "Utilise Rage berserker PENDANT que le Fear/Hurlement de terreur ennemi est encore en cast sur vous (10 s d'immunite), avec stance dance d'urgence\nMacro : /run Action.SetToggle({2, \"UseBerserkerRage-PreFear\"})" },
+    REND                           = { enUS = WR.Rend:Info() .. "\nAnti-restealth",
+        frFR = WR.Rend:Info() .. "\nAnti-camouflage" },
+    RENDTT                         = { enUS = "Keeps Rend rolling on Rogues and Druids to deny restealth (Battle Stance dance when rage allows)",
+        frFR = "Maintient Pourfendre sur les Voleurs et Druides pour empecher le retour en camouflage (bascule en Posture de combat quand la rage le permet)" },
     CONTROL_HEADER                 = { enUS = "PvP - Control",
         frFR = "PvP - Controle" },
     DISARM_TRIGGER                 = { enUS = WR.Disarm:Info() .. "\nTrigger",
@@ -292,6 +304,14 @@ ProfileUI[#ProfileUI + 1]                           = {
         TT            = L.REFLECT_SWAPTT,
         M             = {},
     },
+    {
+        E             = "Checkbox",
+        DB            = "SpellReflection-OnlyImportant",
+        DBV           = true,
+        L             = L.REFLECT_ONLYIMPORTANT,
+        TT            = L.REFLECT_ONLYIMPORTANTTT,
+        M             = {},
+    },
 }
 
 -- [[ PvP Control ]]
@@ -370,6 +390,14 @@ ProfileUI[#ProfileUI + 1]                           = {
     },
     {
         E             = "Checkbox",
+        DB            = "UseRend",
+        DBV           = true,
+        L             = L.REND,
+        TT            = L.RENDTT,
+        M             = {},
+    },
+    {
+        E             = "Checkbox",
         DB            = "UseVictoryRush",
         DBV           = true,
         L             = L.VICTORYRUSH,
@@ -427,6 +455,14 @@ ProfileUI[#ProfileUI + 1]                           = {
     },
 }
 ProfileUI[#ProfileUI + 1]                           = {
+    {
+        E             = "Checkbox",
+        DB            = "UseBerserkerRage-PreFear",
+        DBV           = true,
+        L             = L.BERSERKERRAGE_PREFEAR,
+        TT            = L.BERSERKERRAGE_PREFEARTT,
+        M             = {},
+    },
     {
         E             = "Checkbox",
         DB            = "UseBerserkerRage-LoC",
