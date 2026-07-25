@@ -10,6 +10,22 @@ Rotations guerrier pour WoW TBC au format GGL (TellMeWhen + framework
 | `GGL_Action_Warrior_TBC_Fury.lua` | Profil PvE Fury dégâts max (snippet unique) |
 | `FuryWarrior_TBC.lua` | Version Lua autonome (sans TMW/Action) |
 
+## Profil PvP : spé visée — Arms 33/28/0
+
+Le profil PvP est construit pour la spé des guerriers les mieux classés en
+arène TBC : **Arms Mortal Strike**. Le standard est **33/28/0** —
+côté Armes : Mortal Strike, Death Wish (talent Armes en TBC), Second Wind,
+Improved Overpower/Impale, Improved Hamstring ; côté Fureur : Cruelty,
+**Piercing Howl**, Enrage et **Flurry 5/5**. La variante **41/20/0
+Endless Rage** (rage contre les cibles full résilience) fonctionne sans
+rien changer : la rotation détecte les talents appris.
+
+Ce que ça change dans la rotation par rapport à un profil Fury :
+Mortal Strike passe au cœur de la priorité (uptime du débuff -50 % soins),
+Overpower sur esquive est revalorisé (Impale), Whirlwind et Hamstring
+réservent toujours la rage d'un Mortal Strike imminent, et Execute prime
+sur Whirlwind sous 20 %. Piercing Howl est activé par défaut.
+
 ## Profil PvP : installation
 
 1. Dans TellMeWhen, dupliquer un profil `[GGL]` existant (pour récupérer

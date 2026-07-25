@@ -5,6 +5,11 @@
 -- (https://github.com/MisterCrab/Action), au format des profils GGL.
 -- A installer AVANT le snippet UI (GGL_Action_Warrior_TBC_PvP_UI.lua).
 --
+-- Spec visee : ARMS 33/28/0 (Mortal Strike + Death Wish / Flurry +
+-- Piercing Howl), le build des guerriers les mieux classes en arene TBC.
+-- Variante 41/20/0 Endless Rage supportee sans modification (la rotation
+-- est pilotee par les talents detectes). Fallback Fury inclus.
+--
 -- Orientation PvP (arene / BG) TBC :
 --   - Interrupts Pummel / Shield Bash (toggles UI)
 --   - Spell Reflection avec swap 1H+bouclier automatique (toggle UI)
@@ -393,7 +398,7 @@ A[3] = function(icon)
     end
 
     -- PiercingHowl : snare AoE si la cible n'est pas deja ralentie
-    if ToggleOr("UsePiercingHowl", false) and A.PiercingHowl:IsTalentLearned() and A.PiercingHowl:IsReady("player") and myRage >= A.PiercingHowl:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and Unit(isTarget):GetRange() <= 10 and Unit(isTarget):HasDeBuffs(A.PiercingHowl.ID) == 0 and Unit(isTarget):IsControlAble("snare") then
+    if ToggleOr("UsePiercingHowl", true) and A.PiercingHowl:IsTalentLearned() and A.PiercingHowl:IsReady("player") and myRage >= A.PiercingHowl:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and Unit(isTarget):GetRange() <= 10 and Unit(isTarget):HasDeBuffs(A.PiercingHowl.ID) == 0 and Unit(isTarget):IsControlAble("snare") then
         return A.PiercingHowl:Show(icon)
     end
 
@@ -451,29 +456,30 @@ A[3] = function(icon)
         end
     end
 
-    -- Rampage : upkeep (spec Fury TBC)
-    if isFury and A.Rampage:GetTalentRank() > 0 and Unit("player"):HasBuffs(A.Rampage.ID, true) <= 5 + GetGCD() + GetCurrentGCD() and A.Rampage:IsReady("player") then
-        return A.Rampage:Show(icon)
-    end
-
-    -- MortalStrike
+    -- MortalStrike : coeur du build Arms (debuff soins -50% a maintenir)
     if A.MortalStrike:IsReady(isTarget) and A.MortalStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.MortalStrike:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() then
         return A.MortalStrike:Show(icon)
     end
 
-    -- Bloodthirst
-    if A.Bloodthirst:IsReady(isTarget) and A.Bloodthirst:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.Bloodthirst:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() then
+    -- Execute : sous 20 %, prioritaire sur Whirlwind (toute la rage y passe)
+    if executePhase and A.Execute:IsReady(isTarget) and A.Execute:AbsentImun(isTarget, Temp.AttackTypes) then
+        return A.Execute:Show(icon)
+    end
+
+    -- Bloodthirst (fallback spec Fury)
+    if isFury and A.Bloodthirst:IsReady(isTarget) and A.Bloodthirst:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.Bloodthirst:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() then
         return A.Bloodthirst:Show(icon)
     end
 
-    -- Whirlwind : attention a ne pas casser un CC (sheep/sap) autour
-    if inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and (not A.IsInPvP or not EnemyTeam():IsBreakAble(8)) then
-        return A.Whirlwind:Show(icon)
+    -- Rampage : upkeep (fallback spec Fury)
+    if isFury and A.Rampage:GetTalentRank() > 0 and Unit("player"):HasBuffs(A.Rampage.ID, true) <= 5 + GetGCD() + GetCurrentGCD() and A.Rampage:IsReady("player") then
+        return A.Rampage:Show(icon)
     end
 
-    -- Execute
-    if executePhase and A.Execute:IsReady(isTarget) and A.Execute:AbsentImun(isTarget, Temp.AttackTypes) then
-        return A.Execute:Show(icon)
+    -- Whirlwind : Berserker Stance, en reservant la rage d'un MortalStrike
+    -- imminent, jamais si un CC cassable (sheep/sap) est a portee
+    if not executePhase and inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and (not A.IsInPvP or not EnemyTeam():IsBreakAble(8)) then
+        return A.Whirlwind:Show(icon)
     end
 
     -- VictoryRush
@@ -481,8 +487,9 @@ A[3] = function(icon)
         return A.VictoryRush:Show(icon)
     end
 
-    -- Hamstring : uptime du snare sur les joueurs
-    if ToggleOr("UseHamstring", true) and Unit(isTarget):IsPlayer() and A.Hamstring:IsReady(isTarget) and myRage >= A.Hamstring:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffs(A.Hamstring.ID) <= GetGCD() + GetCurrentGCD() and Unit(isTarget):IsControlAble("snare") and A.Hamstring:AbsentImun(isTarget, Temp.AttackTypes) then
+    -- Hamstring : uptime du snare sur les joueurs, en reservant la rage
+    -- d'un MortalStrike imminent
+    if ToggleOr("UseHamstring", true) and Unit(isTarget):IsPlayer() and A.Hamstring:IsReady(isTarget) and myRage >= A.Hamstring:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and Unit(isTarget):HasDeBuffs(A.Hamstring.ID) <= GetGCD() + GetCurrentGCD() and Unit(isTarget):IsControlAble("snare") and A.Hamstring:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.Hamstring:Show(icon)
     end
 

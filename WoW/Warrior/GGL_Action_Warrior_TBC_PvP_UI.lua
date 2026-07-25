@@ -259,7 +259,7 @@ ProfileUI[#ProfileUI + 1]                           = {
     {
         E             = "Checkbox",
         DB            = "UsePiercingHowl",
-        DBV           = false,
+        DBV           = true,
         L             = L.HOWL,
         TT            = L.HOWLTT,
         M             = {},
