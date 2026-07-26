@@ -63,6 +63,10 @@ Action[Action.PlayerClass] = {
     ThunderClap               = Create({ Type = "Spell", ID = 6343,  useMaxRank = true                         }),
     DemoralizingShout         = Create({ Type = "Spell", ID = 1160,  useMaxRank = true                         }),
     ShieldBlock               = Create({ Type = "Spell", ID = 2565                                             }),
+    -- Mode Zerker DPS (releve top logs : ~80% uptime Berserker Stance)
+    Whirlwind                 = Create({ Type = "Spell", ID = 1680                                             }),
+    Intercept                 = Create({ Type = "Spell", ID = 20252, useMaxRank = true                         }),
+    Recklessness              = Create({ Type = "Spell", ID = 1719                                             }),
     -- Defensifs
     ShieldWall                = Create({ Type = "Spell", ID = 871                                              }),
     LastStand                 = Create({ Type = "Spell", ID = 12975, isTalent = true                           }),
@@ -178,10 +182,17 @@ A[3] = function(icon)
         return -- nil
     end
 
-    -- BerserkerRage : stance dance eclair pour la rage (vu sur les top
-    -- parses : 1 aller-retour Def->Zerk->Def en <1 s). OFF par defaut :
-    -- sans Tactical Mastery le dance ne se fait qu'a rage quasi nulle
-    if ToggleOr("BerserkerRage-Dance", false) and inCombat and isTargetInMelee and myRage <= 10 and Unit("player"):HealthPercent() >= 80 and A.BerserkerRage:GetCooldown() == 0 then
+    -- Mode ZerkerDPS : le style des top logs quand on ne tank pas
+    -- activement (~80% d'uptime Berserker Stance observe) — Devastate/HS
+    -- spam en Berserker, Whirlwind et Berserker Rage on cooldown.
+    -- OFF = mode tank classique en Posture defensive.
+    local zerkerDPS       = ToggleOr("ZerkerDPS", false)
+    local preferredStance = zerkerDPS and 3 or 2
+    local preferredSpell  = zerkerDPS and A.BerserkerStance or A.DefensiveStance
+
+    -- BerserkerRage : stance dance eclair pour la rage (mode tank
+    -- uniquement — en ZerkerDPS il part on cooldown plus bas)
+    if not zerkerDPS and ToggleOr("BerserkerRage-Dance", false) and inCombat and isTargetInMelee and myRage <= 10 and Unit("player"):HealthPercent() >= 80 and A.BerserkerRage:GetCooldown() == 0 then
         if inStance == 3 and A.BerserkerRage:IsReadyByPassCastGCD("player") then
             return A.BerserkerRage:Show(icon)
         end
@@ -190,19 +201,19 @@ A[3] = function(icon)
         end
     end
 
-    -- Stance : tout le kit prot vit en Posture defensive.
-    -- Hors Def : on vide d'abord la rage (Shield Slam et Heroic Strike
-    -- sont utilisables en Battle Stance) puis on bascule TOUJOURS —
-    -- jamais de blocage en Battle Stance
-    if inStance ~= 2 then
+    -- Stance : bascule TOUJOURS vers la posture preferee (Defensive en
+    -- tank, Berserker en ZerkerDPS) — jamais de blocage en Battle Stance.
+    -- On vide d'abord la rage (Shield Slam en Battle/Def et Heroic Strike
+    -- partout restent utilisables) puis on bascule.
+    if inStance ~= preferredStance then
         -- bascule immediate si rage basse ou hors combat
-        if (not inCombat or myRage <= A.TacticalMastery:GetTalentRank() * 5 + 30) and A.DefensiveStance:IsReady("player") then
-            return A.DefensiveStance:Show(icon)
+        if (not inCombat or myRage <= A.TacticalMastery:GetTalentRank() * 5 + 30) and preferredSpell:IsReady("player") then
+            return preferredSpell:Show(icon)
         end
 
-        -- dump de rage avant le swap (Battle Stance uniquement)
-        if inStance == 1 and isTargetInMelee then
-            if A.ShieldSlam:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.ShieldSlam:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.ShieldSlam:AbsentImun(isTarget, Temp.AttackTypes) then
+        -- dump de rage avant le swap
+        if isTargetInMelee then
+            if inStance ~= 3 and A.ShieldSlam:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.ShieldSlam:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.ShieldSlam:AbsentImun(isTarget, Temp.AttackTypes) then
                 return A.ShieldSlam:Show(icon)
             end
 
@@ -211,12 +222,26 @@ A[3] = function(icon)
             end
         end
 
-        -- rien a vider (hors melee, cible morte, Berserker...) : bascule
-        if A.DefensiveStance:IsReady("player") then
-            return A.DefensiveStance:Show(icon)
+        -- rien a vider (hors melee, cible morte...) : bascule quand meme
+        if preferredSpell:IsReady("player") then
+            return preferredSpell:Show(icon)
         end
 
-        return -- nil : le reste du kit exige la Posture defensive
+        return -- nil
+    end
+
+    -- [[ ZERKER DPS : outils Berserker Stance ]]
+    if zerkerDPS and inStance == 3 then
+        -- BerserkerRage on cooldown (rage gratuite + immunite fear,
+        -- ~21% d'uptime sur les top logs)
+        if A.BerserkerRage:IsReady("player") and myRage <= 60 then
+            return A.BerserkerRage:Show(icon)
+        end
+
+        -- Intercept : gap-closer si la cible sort de melee
+        if inCombat and not isTargetInMelee and A.Intercept:IsReady(isTarget, nil, nil, nil, true) and myRage >= A.Intercept:GetSpellPowerCostCache() and A.Intercept:AbsentImun(isTarget, Temp.AttackTypes) then
+            return A.Intercept:Show(icon)
+        end
     end
 
     -- Bloodrage : on cooldown (la rage d'un tank ne doit jamais plafonner
@@ -269,6 +294,11 @@ A[3] = function(icon)
             return A.BloodFury:Show(icon)
         end
 
+        -- Recklessness : mode ZerkerDPS uniquement (vu sur les top logs)
+        if zerkerDPS and inStance == 3 and A.Recklessness:IsReady("player") then
+            return A.Recklessness:Show(icon)
+        end
+
         if A.Trinket1:IsReady(isTarget) and A.Trinket1:IsItemDamager() then
             return A.Trinket1:Show(icon)
         end
@@ -319,14 +349,23 @@ A[3] = function(icon)
     end
 
     -- Revenge : sur proc (dodge/parry/block subi), quasi gratuit
-    if inStance == 2 and A.Revenge:IsReady(isTarget) and myRage >= A.Revenge:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Revenge:AbsentImun(isTarget, Temp.AttackTypes) then
+    -- (la posture requise est geree par IsReady — actif en mode tank)
+    if A.Revenge:IsReady(isTarget) and myRage >= A.Revenge:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Revenge:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.Revenge:Show(icon)
     end
 
+    -- Whirlwind : on cooldown en Berserker Stance (top logs : ~2.9 CPM),
+    -- en reservant la rage du Heroic Strike en file
+    if inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) then
+        return A.Whirlwind:Show(icon)
+    end
+
     -- Devastate : filler sur chaque GCD libre (monte et refresh Sunder x5)
+    -- Top logs : 19-32 CPM, dans toutes les postures ou le serveur le
+    -- permet (la posture requise est geree par IsReady).
     -- Fallback SunderArmor si Devastate n'est pas talente
     if not A.Devastate:IsBlockedBySpellBook() and A.Devastate:GetTalentRank() > 0 then
-        if inStance == 2 and A.Devastate:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.Devastate:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and A.Devastate:AbsentImun(isTarget, Temp.AttackTypes) then
+        if A.Devastate:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.Devastate:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and A.Devastate:AbsentImun(isTarget, Temp.AttackTypes) then
             return A.Devastate:Show(icon)
         end
     else

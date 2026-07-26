@@ -16,6 +16,10 @@ local L                            = {
         frFR = "Annule un Coup heroique/Enchainement en file si la cible devient immunisee" },
     ROTATION_HEADER                = { enUS = "Rotation (Shield Slam > Revenge > Devastate)",
         frFR = "Rotation (Heurt de bouclier > Vengeance > Devastation)" },
+    ZERKERDPS                      = { enUS = "Zerker DPS mode\n(top logs)",
+        frFR = "Mode Zerker DPS\n(top logs)" },
+    ZERKERDPSTT                    = { enUS = "The playstyle of top-parsing prot warriors when NOT actively tanking (~80% Berserker Stance uptime observed): Devastate/Heroic Strike spam in Berserker Stance, Whirlwind and Berserker Rage on cooldown, Recklessness in burst, Intercept.\nOFF (default): classic Defensive Stance tanking mode.\nMacro: /run Action.SetToggle({2, \"ZerkerDPS\"})",
+        frFR = "Le style des guerriers prot top parses quand ils ne tankent PAS activement (~80 % d'uptime Posture berserker observe) : spam Devastation/Coup heroique en Posture berserker, Tourbillon et Rage berserker des que disponibles, Temerite en burst, Interception.\nOFF (defaut) : mode tank classique en Posture defensive.\nMacro : /run Action.SetToggle({2, \"ZerkerDPS\"})" },
     SHIELDBLOCK                    = { enUS = WR.ShieldBlock:Info() .. "\nOn cooldown",
         frFR = WR.ShieldBlock:Info() .. "\nDes que possible" },
     SHIELDBLOCKTT                  = { enUS = "Off-GCD: prevents crushing blows AND generates Revenge procs (blocked hits enable Revenge) — top parses keep it rolling",
@@ -150,6 +154,14 @@ ProfileUI[#ProfileUI + 1]                           = {
     },
 }
 ProfileUI[#ProfileUI + 1]                           = {
+    {
+        E             = "Checkbox",
+        DB            = "ZerkerDPS",
+        DBV           = false,
+        L             = L.ZERKERDPS,
+        TT            = L.ZERKERDPSTT,
+        M             = {},
+    },
     {
         E             = "Checkbox",
         DB            = "ShieldBlock",
@@ -329,6 +341,7 @@ do
     -- Toggles exposes sur la barre (ordre d'affichage).
     -- Ajouter/retirer une ligne suffit pour changer la barre.
     local BUTTONS = {
+        { key = "ZerkerDPS",            spell = WR.BerserkerStance,   default = false },
         { key = "ShieldBlock",          spell = WR.ShieldBlock,       default = true  },
         { key = "MaintainThunderClap",  spell = WR.ThunderClap,       default = true  },
         { key = "MaintainDemoShout",    spell = WR.DemoralizingShout, default = false },
