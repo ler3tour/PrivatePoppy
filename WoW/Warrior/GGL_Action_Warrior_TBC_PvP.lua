@@ -253,6 +253,27 @@ do
     end
 end
 
+-- Sorts a kicker en priorite (heals, CC, resurrections) pour le mode
+-- "economiser le Pummel pour le heal"
+local KickImportant = {}
+do
+    -- Heals : Healing Touch, Regrowth, Flash of Light, Holy Light,
+    -- Greater Heal, Flash Heal, Heal, Lesser Heal, Prayer of Healing,
+    -- Binding Heal, Chain Heal, Healing Wave, Lesser Healing Wave
+    -- CC : Fear, Howl of Terror, Polymorph, Cyclone, Entangling Roots,
+    -- Mind Control, Hibernate
+    -- Rez : Rebirth, Resurrection, Redemption, Ancestral Spirit
+    local kickIDs = { 5185, 8936, 19750, 635, 2060, 2061, 2054, 2050, 596, 32546, 1064, 331, 8004,
+                      5782, 5484, 118, 33786, 339, 605, 2637,
+                      20484, 2006, 7328, 2008 }
+    for i = 1, #kickIDs do
+        local name = GetSpellInfo(kickIDs[i])
+        if name then
+            KickImportant[name] = true
+        end
+    end
+end
+
 -- Trouve le soigneur du groupe (le druide en 2v2/3v3), retourne
 -- l'unitID party et l'objet Intervene correspondant
 local function GetHealerUnit()
@@ -277,6 +298,39 @@ local function GetReflectUnit()
             end
         end
     end
+end
+
+-- Validation d'un kick sur unitID : cast en cours, kickable, filtre
+-- "sorts importants", anti-fake (laisse le cast avancer) et anti-overlap
+-- avec un Spell Reflection deja actif
+local function KickIsValid(unitID)
+    local castLeft, castDone, _, castName, notInterruptAble = Unit(unitID):IsCastingRemains()
+    if not castLeft or castLeft <= GetPing() + 0.1 or notInterruptAble then
+        return
+    end
+
+    -- Anti-overlap : ce cast nous cible et va etre renvoye par le reflect
+    if UnitIsUnit(unitID .. "target", "player") and Unit("player"):HasBuffs(A.SpellReflection.ID, true) > 0 then
+        return
+    end
+
+    -- Pro : ne kicker que les heals/CC/rez (economise le kick pour le heal)
+    if ToggleOr("Interrupt-OnlyImportant", false) and not (castName and KickImportant[castName]) then
+        return
+    end
+
+    -- Anti-fake : ne kicker qu'apres X % du cast ecoule
+    local atCastDone = ToggleOr("Interrupt-AtCastDone", 30)
+    if atCastDone > 0 and castDone then
+        if castDone <= 1 then
+            castDone = castDone * 100 -- normalise l'echelle 0-1
+        end
+        if castDone < atCastDone then
+            return
+        end
+    end
+
+    return true
 end
 
 -- Fear en cours de cast sur nous : Fear (cible) ou Howl of Terror (zone)
@@ -396,26 +450,22 @@ A[3] = function(icon)
     -- Toggle a la volee : /run Action.SetToggle({2, "Interrupt-Pummel"})
     ----------------------------------------------------------------------
     local kickUnit = isMouse or isTarget
-    if kickUnit then
-        local castLeft, _, _, _, notInterruptAble = Unit(kickUnit):IsCastingRemains()
-        if castLeft and castLeft > GetPing() + 0.1 and not notInterruptAble then
-            -- Pummel (Berserker Stance uniquement, pas de switch auto)
-            if ToggleOr("Interrupt-Pummel", true) and inStance == 3 and A.Pummel:IsReady(kickUnit) and A.Pummel:AbsentImun(kickUnit, Temp.AuraForKick) then
-                return A.Pummel:Show(icon)
-            end
+    if kickUnit and KickIsValid(kickUnit) then
+        -- Pummel (Berserker Stance uniquement, pas de switch auto)
+        if ToggleOr("Interrupt-Pummel", true) and inStance == 3 and A.Pummel:IsReady(kickUnit) and A.Pummel:AbsentImun(kickUnit, Temp.AuraForKick) then
+            return A.Pummel:Show(icon)
+        end
 
-            -- ShieldBash (Battle/Def + bouclier deja equipe)
-            if ToggleOr("Interrupt-ShieldBash", false) and (inStance == 1 or inStance == 2) and Player:HasShield(true) and A.ShieldBash:IsReady(kickUnit) and A.ShieldBash:AbsentImun(kickUnit, Temp.AuraForKick) then
-                return A.ShieldBash:Show(icon)
-            end
+        -- ShieldBash (Battle/Def + bouclier deja equipe)
+        if ToggleOr("Interrupt-ShieldBash", false) and (inStance == 1 or inStance == 2) and Player:HasShield(true) and A.ShieldBash:IsReady(kickUnit) and A.ShieldBash:AbsentImun(kickUnit, Temp.AuraForKick) then
+            return A.ShieldBash:Show(icon)
         end
     end
 
     -- Pummel @focus : kick le focus sans changer de cible (WLD : mettre
     -- le healer/caster adverse en focus)
-    if ToggleOr("Interrupt-Focus", true) and inStance == 3 and IsUnitEnemy("focus") and InMelee("focus") then
-        local focusCastLeft, _, _, _, focusNotInterruptAble = Unit("focus"):IsCastingRemains()
-        if focusCastLeft and focusCastLeft > GetPing() + 0.1 and not focusNotInterruptAble and A.PummelFocus:IsReadyByPassCastGCD("focus") and A.Pummel:GetCooldown() == 0 and myRage >= A.Pummel:GetSpellPowerCostCache() and A.Pummel:AbsentImun("focus", Temp.AuraForKick) then
+    if ToggleOr("Interrupt-Focus", true) and inStance == 3 and IsUnitEnemy("focus") and InMelee("focus") and KickIsValid("focus") then
+        if A.PummelFocus:IsReadyByPassCastGCD("focus") and A.Pummel:GetCooldown() == 0 and myRage >= A.Pummel:GetSpellPowerCostCache() and A.Pummel:AbsentImun("focus", Temp.AuraForKick) then
             return A.PummelFocus:Show(icon)
         end
     end
@@ -533,6 +583,11 @@ A[3] = function(icon)
 
         if A.Trinket2:IsReady(isTarget) and A.Trinket2:IsItemDamager() then
             return A.Trinket2:Show(icon)
+        end
+
+        -- MightyRagePotion : dans la fenetre de burst si la rage manque
+        if ToggleOr("MightyRagePotion", true) and myRage < 25 and A.MightyRagePotion:IsReady("player") then
+            return A.MightyRagePotion:Show(icon)
         end
     end
 

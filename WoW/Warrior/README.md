@@ -45,6 +45,21 @@ Le profil intègre le support des deux compos :
 
 ## Améliorations issues des guides arène
 
+Techniques « pro » sur les interrupts :
+
+- **Kick sélectif** (toggle `Interrupt-OnlyImportant`) : garde le Pummel
+  pour les casts qui comptent — heals, Fear, Polymorphe, Cyclone,
+  résurrections — au lieu de le gaspiller sur un cast de dégâts.
+- **Anti-fake cast** (slider `Interrupt-AtCastDone`, 30 % par défaut) :
+  le kick n'est déclenché qu'une fois le cast ennemi avancé à X %, pour
+  battre les fake casts (0 = kick instantané).
+- **Anti-overlap Pummel/Reflect** : si votre Spell Reflection est actif
+  et que le sort casté vous cible, le kick est retenu — le sort sera
+  renvoyé, pas besoin de brûler le Pummel (conseil récurrent :
+  « coordinate interrupts rather than overlapping Pummel and Spell
+  Reflect »).
+- **Mighty Rage Potion** dans la fenêtre de burst quand la rage manque.
+
 - **Berserker Rage préventif** : quand un Fear ou Hurlement de terreur est
   *en cours de cast* sur vous, Rage berserker part avant l'impact
   (immunité 10 s), avec stance dance d'urgence si besoin. Le Spell
