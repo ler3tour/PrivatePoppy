@@ -190,9 +190,33 @@ A[3] = function(icon)
         end
     end
 
-    -- Stance : tout le kit prot vit en Posture defensive
-    if inStance ~= 2 and A.DefensiveStance:IsReady("player") and (myRage <= A.TacticalMastery:GetTalentRank() * 5 + 10 or not inCombat) then
-        return A.DefensiveStance:Show(icon)
+    -- Stance : tout le kit prot vit en Posture defensive.
+    -- Hors Def : on vide d'abord la rage (Shield Slam et Heroic Strike
+    -- sont utilisables en Battle Stance) puis on bascule TOUJOURS —
+    -- jamais de blocage en Battle Stance
+    if inStance ~= 2 then
+        -- bascule immediate si rage basse ou hors combat
+        if (not inCombat or myRage <= A.TacticalMastery:GetTalentRank() * 5 + 30) and A.DefensiveStance:IsReady("player") then
+            return A.DefensiveStance:Show(icon)
+        end
+
+        -- dump de rage avant le swap (Battle Stance uniquement)
+        if inStance == 1 and isTargetInMelee then
+            if A.ShieldSlam:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.ShieldSlam:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.ShieldSlam:AbsentImun(isTarget, Temp.AttackTypes) then
+                return A.ShieldSlam:Show(icon)
+            end
+
+            if not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) then
+                return A.HeroicStrike:Show(icon)
+            end
+        end
+
+        -- rien a vider (hors melee, cible morte, Berserker...) : bascule
+        if A.DefensiveStance:IsReady("player") then
+            return A.DefensiveStance:Show(icon)
+        end
+
+        return -- nil : le reste du kit exige la Posture defensive
     end
 
     -- Bloodrage : on cooldown (la rage d'un tank ne doit jamais plafonner
@@ -202,17 +226,23 @@ A[3] = function(icon)
     end
 
     -- [[ SELF DEFENSE ]]
+    -- OFF par defaut : ces cooldowns restent sous VOTRE controle manuel.
+    -- Activez les checkboxes dans /action pour deleguer a la rotation.
     if inCombat then
-        -- ShieldWall
-        local swHP = ToggleOr("ShieldWallHP", 25)
-        if swHP > 0 and Unit("player"):HealthPercent() <= swHP and A.ShieldWall:IsReadyByPassCastGCD("player", nil, nil, true) and inStance == 2 then
-            return A.ShieldWall:Show(icon)
+        -- ShieldWall (toggle UseShieldWall, off par defaut)
+        if ToggleOr("UseShieldWall", false) then
+            local swHP = ToggleOr("ShieldWallHP", 25)
+            if swHP > 0 and Unit("player"):HealthPercent() <= swHP and A.ShieldWall:IsReadyByPassCastGCD("player", nil, nil, true) and inStance == 2 then
+                return A.ShieldWall:Show(icon)
+            end
         end
 
-        -- LastStand
-        local lsHP = ToggleOr("LastStandHP", 35)
-        if lsHP > 0 and Unit("player"):HealthPercent() <= lsHP and A.LastStand:IsReadyByPassCastGCD("player", nil, nil, true) then
-            return A.LastStand:Show(icon)
+        -- LastStand (toggle UseLastStand, off par defaut)
+        if ToggleOr("UseLastStand", false) then
+            local lsHP = ToggleOr("LastStandHP", 35)
+            if lsHP > 0 and Unit("player"):HealthPercent() <= lsHP and A.LastStand:IsReadyByPassCastGCD("player", nil, nil, true) then
+                return A.LastStand:Show(icon)
+            end
         end
     end
 
@@ -327,8 +357,8 @@ end
 -- [[ META 5 : defensifs passifs ]]
 --------------------------------------------------------------------------
 A[5] = function(icon)
-    -- LastStand en catastrophe (icone passive)
-    if Unit("player"):CombatTime() > 0 and Unit("player"):HealthPercent() <= 20 and A.LastStand:IsReadyP("player") then
+    -- LastStand en catastrophe (icone passive) — uniquement si delegue
+    if GetToggle(2, "UseLastStand") and Unit("player"):CombatTime() > 0 and Unit("player"):HealthPercent() <= 20 and A.LastStand:IsReadyP("player") then
         return A.LastStand:Show(icon)
     end
 end

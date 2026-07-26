@@ -64,8 +64,16 @@ local L                            = {
         frFR = "Cri utilise :" },
     SHOUTTT                        = { enUS = "Commanding Shout: +max health (tank default)\nBattle Shout: attack power (more DPS)",
         frFR = "Cri de commandement : +PV max (defaut tank)\nCri de guerre : puissance d'attaque (plus de DPS)" },
-    DEFENSE_HEADER                 = { enUS = "Defense",
-        frFR = "Defense" },
+    DEFENSE_HEADER                 = { enUS = "Defense (manual by default)",
+        frFR = "Defense (manuel par defaut)" },
+    USE_SHIELDWALL                 = { enUS = WR.ShieldWall:Info() .. "\nAuto use",
+        frFR = WR.ShieldWall:Info() .. "\nUtilisation auto" },
+    USE_SHIELDWALLTT               = { enUS = "OFF (default): you keep full manual control of this cooldown\nON: the rotation fires it below the HP threshold\nMacro toggle: /run Action.SetToggle({2, \"UseShieldWall\"})",
+        frFR = "OFF (defaut) : vous gardez le controle manuel total de ce cooldown\nON : la rotation le declenche sous le seuil de PV\nMacro : /run Action.SetToggle({2, \"UseShieldWall\"})" },
+    USE_LASTSTAND                  = { enUS = WR.LastStand:Info() .. "\nAuto use",
+        frFR = WR.LastStand:Info() .. "\nUtilisation auto" },
+    USE_LASTSTANDTT                = { enUS = "OFF (default): you keep full manual control of this cooldown\nON: the rotation fires it below the HP threshold\nMacro toggle: /run Action.SetToggle({2, \"UseLastStand\"})",
+        frFR = "OFF (defaut) : vous gardez le controle manuel total de ce cooldown\nON : la rotation le declenche sous le seuil de PV\nMacro : /run Action.SetToggle({2, \"UseLastStand\"})" },
     SHIELDWALL_HP                  = { enUS = WR.ShieldWall:Info() .. "\n<= health (%)",
         frFR = WR.ShieldWall:Info() .. "\n<= sante (%)" },
     LASTSTAND_HP                   = { enUS = WR.LastStand:Info() .. "\n<= health (%)",
@@ -261,6 +269,14 @@ ProfileUI[#ProfileUI + 1]                           = {
 }
 ProfileUI[#ProfileUI + 1]                           = {
     {
+        E             = "Checkbox",
+        DB            = "UseShieldWall",
+        DBV           = false,
+        L             = L.USE_SHIELDWALL,
+        TT            = L.USE_SHIELDWALLTT,
+        M             = {},
+    },
+    {
         E             = "Slider",
         MIN           = 0,
         MAX           = 100,
@@ -268,6 +284,16 @@ ProfileUI[#ProfileUI + 1]                           = {
         DBV           = 25,
         L             = L.SHIELDWALL_HP,
         TT            = L.DEFENSE_TT,
+        M             = {},
+    },
+}
+ProfileUI[#ProfileUI + 1]                           = {
+    {
+        E             = "Checkbox",
+        DB            = "UseLastStand",
+        DBV           = false,
+        L             = L.USE_LASTSTAND,
+        TT            = L.USE_LASTSTANDTT,
         M             = {},
     },
     {
