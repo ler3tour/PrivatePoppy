@@ -307,3 +307,158 @@ ProfileUI[#ProfileUI + 1]                           = {
         M             = {},
     },
 }
+
+--------------------------------------------------------------------------
+-- [[ BARRE DE TOGGLES A L'ECRAN ]]
+-- Boutons cliquables avec le skin (icone) de chaque sort :
+--   - icone en couleur + lisere dore  = AUTO ACTIVE
+--   - icone grisee                    = DESACTIVE (controle manuel)
+--   - clic gauche : bascule le toggle correspondant
+--   - Shift + glisser : deplace la barre (position sauvegardee)
+--   - /gglbar : affiche / masque la barre
+--------------------------------------------------------------------------
+do
+    local CreateFrame     = _G.CreateFrame
+    local UIParent        = _G.UIParent
+    local GameTooltip     = _G.GameTooltip
+    local GetSpellInfo    = _G.GetSpellInfo
+    local IsShiftKeyDown  = _G.IsShiftKeyDown
+    local GetToggle       = A.GetToggle
+    local SetToggle       = A.SetToggle
+
+    -- Toggles exposes sur la barre (ordre d'affichage).
+    -- Ajouter/retirer une ligne suffit pour changer la barre.
+    local BUTTONS = {
+        { key = "ShieldBlock",          spell = WR.ShieldBlock,       default = true  },
+        { key = "MaintainThunderClap",  spell = WR.ThunderClap,       default = true  },
+        { key = "MaintainDemoShout",    spell = WR.DemoralizingShout, default = false },
+        { key = "Interrupt-ShieldBash", spell = WR.ShieldBash,        default = true  },
+        { key = "AoE",                  spell = WR.Cleave,            default = false },
+        { key = "UseShieldWall",        spell = WR.ShieldWall,        default = false },
+        { key = "UseLastStand",         spell = WR.LastStand,         default = false },
+    }
+
+    local SIZE, GAP, PAD = 32, 4, 4
+
+    local function GetState(entry)
+        local value = GetToggle(2, entry.key)
+        if value == nil then
+            return entry.default
+        end
+        return value and true or false
+    end
+
+    local bar = _G.GGLProtToggleBar
+    if not bar then
+        bar = CreateFrame("Frame", "GGLProtToggleBar", UIParent)
+        bar:SetWidth(PAD * 2 + #BUTTONS * SIZE + (#BUTTONS - 1) * GAP)
+        bar:SetHeight(PAD * 2 + SIZE)
+        bar:SetPoint("CENTER", UIParent, "CENTER", 0, -220)
+        bar:SetMovable(true)
+        bar:EnableMouse(true)
+        bar:SetClampedToScreen(true)
+        bar:SetFrameStrata("MEDIUM")
+
+        local bg = bar:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(bar)
+        bg:SetTexture(0, 0, 0, 0.45)
+
+        bar.buttons = {}
+
+        local function StartDrag()
+            if IsShiftKeyDown() then
+                bar:StartMoving()
+                bar.isMoving = true
+            end
+        end
+        local function StopDrag()
+            if bar.isMoving then
+                bar:StopMovingOrSizing()
+                bar:SetUserPlaced(true)
+                bar.isMoving = false
+            end
+        end
+        bar:RegisterForDrag("LeftButton")
+        bar:SetScript("OnDragStart", StartDrag)
+        bar:SetScript("OnDragStop", StopDrag)
+
+        for i = 1, #BUTTONS do
+            local entry = BUTTONS[i]
+            local btn = CreateFrame("Button", "GGLProtToggleButton" .. i, bar)
+            btn:SetWidth(SIZE)
+            btn:SetHeight(SIZE)
+            btn:SetPoint("LEFT", bar, "LEFT", PAD + (i - 1) * (SIZE + GAP), 0)
+
+            local icon = btn:CreateTexture(nil, "ARTWORK")
+            icon:SetAllPoints(btn)
+            local _, _, spellIcon = GetSpellInfo(entry.spell.ID)
+            icon:SetTexture(spellIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
+            icon:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- coupe le bord moche
+            btn.icon = icon
+
+            -- lisere dore "actif" (le glow des boutons d'action Blizzard)
+            local border = btn:CreateTexture(nil, "OVERLAY")
+            border:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+            border:SetBlendMode("ADD")
+            border:SetPoint("CENTER", btn, "CENTER", 0, 0)
+            border:SetWidth(SIZE * 1.7)
+            border:SetHeight(SIZE * 1.7)
+            btn.border = border
+
+            btn.entry = entry
+
+            btn:RegisterForDrag("LeftButton")
+            btn:SetScript("OnDragStart", StartDrag)
+            btn:SetScript("OnDragStop", StopDrag)
+
+            btn:SetScript("OnClick", function()
+                SetToggle({ 2, entry.key })
+            end)
+
+            btn:SetScript("OnEnter", function()
+                GameTooltip:SetOwner(btn, "ANCHOR_TOP")
+                GameTooltip:AddLine((entry.spell:Info()) or entry.key)
+                if GetState(entry) then
+                    GameTooltip:AddLine("AUTO : |cff00ff00ACTIVE|r - clic pour desactiver", 1, 1, 1)
+                else
+                    GameTooltip:AddLine("AUTO : |cffff2020DESACTIVE|r - clic pour activer", 1, 1, 1)
+                end
+                GameTooltip:AddLine("Shift + glisser : deplacer la barre", 0.6, 0.6, 0.6)
+                GameTooltip:Show()
+            end)
+            btn:SetScript("OnLeave", function()
+                GameTooltip:Hide()
+            end)
+
+            bar.buttons[i] = btn
+        end
+
+        -- rafraichissement visuel (suit aussi les changements via /action
+        -- ou macros SetToggle)
+        local elapsedSince = 0
+        bar:SetScript("OnUpdate", function(self, elapsed)
+            elapsedSince = elapsedSince + (elapsed or _G.arg1 or 0.02)
+            if elapsedSince < 0.2 then return end
+            elapsedSince = 0
+            for j = 1, #bar.buttons do
+                local b = bar.buttons[j]
+                if GetState(b.entry) then
+                    b.icon:SetVertexColor(1, 1, 1)
+                    b.border:Show()
+                else
+                    b.icon:SetVertexColor(0.25, 0.25, 0.25)
+                    b.border:Hide()
+                end
+            end
+        end)
+
+        _G.SLASH_GGLBAR1 = "/gglbar"
+        _G.SlashCmdList["GGLBAR"] = function()
+            if bar:IsShown() then
+                bar:Hide()
+            else
+                bar:Show()
+            end
+        end
+    end
+end
