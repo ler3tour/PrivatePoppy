@@ -636,15 +636,23 @@ A[3] = function(icon)
         return A.Rampage:Show(icon)
     end
 
+    -- VictoryRush : gratuit et gros hit — meilleurs degats par point de
+    -- rage du kit, toujours avant Whirlwind
+    if ToggleOr("UseVictoryRush", true) and A.VictoryRush:IsReady(isTarget) and A.VictoryRush:AbsentImun(isTarget, Temp.AttackTypes) then
+        return A.VictoryRush:Show(icon)
+    end
+
     -- Whirlwind : Berserker Stance, en reservant la rage d'un MortalStrike
     -- imminent, jamais si un CC cassable (sheep/sap) est a portee
     if not executePhase and inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and (not A.IsInPvP or not EnemyTeam():IsBreakAble(8)) then
         return A.Whirlwind:Show(icon)
     end
 
-    -- VictoryRush
-    if ToggleOr("UseVictoryRush", true) and A.VictoryRush:IsReady(isTarget) and A.VictoryRush:AbsentImun(isTarget, Temp.AttackTypes) then
-        return A.VictoryRush:Show(icon)
+    -- Hamstring : uptime du snare sur les joueurs, en reservant la rage
+    -- d'un MortalStrike imminent (avant Rend : une cible qui s'echappe
+    -- coute plus cher qu'un restealth potentiel)
+    if ToggleOr("UseHamstring", true) and Unit(isTarget):IsPlayer() and A.Hamstring:IsReady(isTarget) and myRage >= A.Hamstring:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and Unit(isTarget):HasDeBuffs(A.Hamstring.ID) <= GetGCD() + GetCurrentGCD() and Unit(isTarget):IsControlAble("snare") and A.Hamstring:AbsentImun(isTarget, Temp.AttackTypes) then
+        return A.Hamstring:Show(icon)
     end
 
     -- Rend : anti-restealth sur Rogue/Druide ("keep Rend up 100%"),
@@ -660,12 +668,6 @@ A[3] = function(icon)
                 return A.BattleStance:Show(icon)
             end
         end
-    end
-
-    -- Hamstring : uptime du snare sur les joueurs, en reservant la rage
-    -- d'un MortalStrike imminent
-    if ToggleOr("UseHamstring", true) and Unit(isTarget):IsPlayer() and A.Hamstring:IsReady(isTarget) and myRage >= A.Hamstring:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and Unit(isTarget):HasDeBuffs(A.Hamstring.ID) <= GetGCD() + GetCurrentGCD() and Unit(isTarget):IsControlAble("snare") and A.Hamstring:AbsentImun(isTarget, Temp.AttackTypes) then
-        return A.Hamstring:Show(icon)
     end
 
     -- Cleave : rage dump AoE (jamais si CC cassable autour)
