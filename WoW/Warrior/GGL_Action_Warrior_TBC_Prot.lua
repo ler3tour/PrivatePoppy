@@ -78,8 +78,11 @@ Action[Action.PlayerClass] = {
     BerserkerRage             = Create({ Type = "Spell", ID = 18499                                            }),
     BattleShout               = Create({ Type = "Spell", ID = 6673,  useMaxRank = true                         }),
     CommandingShout           = Create({ Type = "Spell", ID = 469                                              }),
-    -- Consumables
+    -- Consumables (usage releve sur les top parses : Haste Potion x2 et
+    -- Super Sapper Charge sur un kill Morogrim ~2min45)
     MightyRagePotion          = Create({ Type = "Potion", ID = 13442                                           }),
+    HastePotion               = Create({ Type = "Potion", ID = 22838                                           }),
+    SuperSapperCharge         = Create({ Type = "Item",   ID = 23827                                           }),
     -- Hidden (talents trackes)
     FocusedRage               = Create({ Type = "Spell", ID = 29787, Hidden = true, isTalent = true, useMaxRank = true }),
     TacticalMastery           = Create({ Type = "Spell", ID = 12295, Hidden = true, isTalent = true, useMaxRank = true }),
@@ -175,6 +178,18 @@ A[3] = function(icon)
         return -- nil
     end
 
+    -- BerserkerRage : stance dance eclair pour la rage (vu sur les top
+    -- parses : 1 aller-retour Def->Zerk->Def en <1 s). OFF par defaut :
+    -- sans Tactical Mastery le dance ne se fait qu'a rage quasi nulle
+    if ToggleOr("BerserkerRage-Dance", false) and inCombat and isTargetInMelee and myRage <= 10 and Unit("player"):HealthPercent() >= 80 and A.BerserkerRage:GetCooldown() == 0 then
+        if inStance == 3 and A.BerserkerRage:IsReadyByPassCastGCD("player") then
+            return A.BerserkerRage:Show(icon)
+        end
+        if inStance == 2 and A.BerserkerStance:IsReady("player") then
+            return A.BerserkerStance:Show(icon)
+        end
+    end
+
     -- Stance : tout le kit prot vit en Posture defensive
     if inStance ~= 2 and A.DefensiveStance:IsReady("player") and (myRage <= A.TacticalMastery:GetTalentRank() * 5 + 10 or not inCombat) then
         return A.DefensiveStance:Show(icon)
@@ -235,6 +250,16 @@ A[3] = function(icon)
         if ToggleOr("MightyRagePotion", false) and myRage < 25 and A.MightyRagePotion:IsReady("player") then
             return A.MightyRagePotion:Show(icon)
         end
+
+        -- HastePotion : sur boss (les top parses la double-potent)
+        if ToggleOr("HastePotion", true) and Unit(isTarget):IsBoss() and A.HastePotion:IsReady("player") then
+            return A.HastePotion:Show(icon)
+        end
+
+        -- SuperSapperCharge : AoE ingenieur sur packs (3+ en melee)
+        if inAoE and ToggleOr("SuperSapperCharge", false) and MultiUnits:GetBySpell(A.ShieldSlam, 8) >= 3 and A.SuperSapperCharge:IsReady("player") then
+            return A.SuperSapperCharge:Show(icon)
+        end
     end
 
     -- ShieldBlock : on cooldown en combat (hors GCD) — anti-crush ET
@@ -280,6 +305,12 @@ A[3] = function(icon)
         end
     end
 
+    -- Shout : refresh EN combat (releve top parses : ~91 % d'uptime
+    -- Commanding Shout), sans jamais affamer Shield Slam
+    if shoutToUse ~= "OFF" and A[shoutToUse] and inCombat and A[shoutToUse]:IsReady("player") and myRage >= A[shoutToUse]:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() then
+        return A[shoutToUse]:Show(icon)
+    end
+
     -- Cleave : vidange de rage AoE (hors GCD)
     if inAoE and not IsCurrentAttack() and MultiUnits:GetBySpell(A.ShieldSlam, 7) >= 2 and A.Cleave:IsReady(isTarget, true) and A.Cleave:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("Cleave-PWR", 50) then
         return A.Cleave:Show(icon)
@@ -287,7 +318,7 @@ A[3] = function(icon)
 
     -- HeroicStrike : vidange de rage mono (hors GCD) — le seuil garantit
     -- que Shield Slam et Shield Block ne seront jamais affames
-    if not inAoE and not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("HeroicStrike-PWR", 50) then
+    if not inAoE and not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("HeroicStrike-PWR", 40) then
         return A.HeroicStrike:Show(icon)
     end
 end
