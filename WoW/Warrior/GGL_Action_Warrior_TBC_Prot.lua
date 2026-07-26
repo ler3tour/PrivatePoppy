@@ -354,6 +354,13 @@ A[3] = function(icon)
         return A.Revenge:Show(icon)
     end
 
+    -- Shout : refresh EN combat (top logs : 100 % d'uptime Commanding
+    -- Shout). PLACE AVANT les fillers (Whirlwind/Devastate mangent
+    -- chaque GCD libre, le cri n'aurait jamais son tour apres eux)
+    if shoutToUse ~= "OFF" and A[shoutToUse] and inCombat and A[shoutToUse]:IsReady("player") and myRage >= A[shoutToUse]:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() + 1 then
+        return A[shoutToUse]:Show(icon)
+    end
+
     -- Whirlwind : on cooldown en Berserker Stance (top logs : ~2.9 CPM),
     -- en reservant la rage du Heroic Strike en file
     if inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) then
@@ -372,12 +379,6 @@ A[3] = function(icon)
         if A.SunderArmor:IsReady(isTarget) and myRage >= A.SunderArmor:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffsStacks(A.SunderArmor.ID, true) < 5 and A.SunderArmor:AbsentImun(isTarget, Temp.AttackTypes) then
             return A.SunderArmor:Show(icon)
         end
-    end
-
-    -- Shout : refresh EN combat (releve top parses : ~91 % d'uptime
-    -- Commanding Shout), sans jamais affamer Shield Slam
-    if shoutToUse ~= "OFF" and A[shoutToUse] and inCombat and A[shoutToUse]:IsReady("player") and myRage >= A[shoutToUse]:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() then
-        return A[shoutToUse]:Show(icon)
     end
 
     -- Cleave : vidange de rage AoE (hors GCD)
