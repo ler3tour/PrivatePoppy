@@ -299,11 +299,12 @@ A[3] = function(icon)
             return A.Recklessness:Show(icon)
         end
 
-        if A.Trinket1:IsReady(isTarget) and A.Trinket1:IsItemDamager() then
+        -- Trinkets : toggles separes (slot haut / slot bas)
+        if ToggleOr("UseTrinket1", true) and A.Trinket1:IsReady(isTarget) and A.Trinket1:IsItemDamager() then
             return A.Trinket1:Show(icon)
         end
 
-        if A.Trinket2:IsReady(isTarget) and A.Trinket2:IsItemDamager() then
+        if ToggleOr("UseTrinket2", true) and A.Trinket2:IsReady(isTarget) and A.Trinket2:IsItemDamager() then
             return A.Trinket2:Show(icon)
         end
 

@@ -64,6 +64,12 @@ local L                            = {
         frFR = WR.MightyRagePotion:Info() .. "\nEn fenetre de burst" },
     MIGHTYRAGEPOTIONTT             = { enUS = "Uses the potion during the burst window when rage is low",
         frFR = "Utilise la potion pendant la fenetre de burst quand la rage manque" },
+    USE_TRINKET1                   = { enUS = "Trinket 1 (top slot)\nAuto use",
+        frFR = "Bijou 1 (slot haut)\nUtilisation auto" },
+    USE_TRINKET2                   = { enUS = "Trinket 2 (bottom slot)\nAuto use",
+        frFR = "Bijou 2 (slot bas)\nUtilisation auto" },
+    USE_TRINKETTT                  = { enUS = "ON: the rotation uses this on-use trinket during the burst window (Burst toggle must be on)\nOFF: you keep manual control\nMacro: /run Action.SetToggle({2, \"UseTrinket1\"}) (or UseTrinket2)",
+        frFR = "ON : la rotation utilise ce bijou on-use pendant la fenetre de burst (toggle Burst actif requis)\nOFF : vous gardez le controle manuel\nMacro : /run Action.SetToggle({2, \"UseTrinket1\"}) (ou UseTrinket2)" },
     SHOUT                          = { enUS = "Used shout:",
         frFR = "Cri utilise :" },
     SHOUTTT                        = { enUS = "Commanding Shout: +max health (tank default)\nBattle Shout: attack power (more DPS)",
@@ -243,6 +249,22 @@ ProfileUI[#ProfileUI + 1]                           = {
         TT            = L.MIGHTYRAGEPOTIONTT,
         M             = {},
     },
+    {
+        E             = "Checkbox",
+        DB            = "UseTrinket1",
+        DBV           = true,
+        L             = L.USE_TRINKET1,
+        TT            = L.USE_TRINKETTT,
+        M             = {},
+    },
+    {
+        E             = "Checkbox",
+        DB            = "UseTrinket2",
+        DBV           = true,
+        L             = L.USE_TRINKET2,
+        TT            = L.USE_TRINKETTT,
+        M             = {},
+    },
 }
 ProfileUI[#ProfileUI + 1]                           = {
     RowOptions = { margin = { top = 5 } },
@@ -330,16 +352,18 @@ ProfileUI[#ProfileUI + 1]                           = {
 --   - /gglbar : affiche / masque la barre
 --------------------------------------------------------------------------
 do
-    local CreateFrame     = _G.CreateFrame
-    local UIParent        = _G.UIParent
-    local GameTooltip     = _G.GameTooltip
-    local GetSpellInfo    = _G.GetSpellInfo
-    local IsShiftKeyDown  = _G.IsShiftKeyDown
-    local GetToggle       = A.GetToggle
-    local SetToggle       = A.SetToggle
+    local CreateFrame             = _G.CreateFrame
+    local UIParent                = _G.UIParent
+    local GameTooltip             = _G.GameTooltip
+    local GetSpellInfo            = _G.GetSpellInfo
+    local GetInventoryItemTexture = _G.GetInventoryItemTexture
+    local IsShiftKeyDown          = _G.IsShiftKeyDown
+    local GetToggle               = A.GetToggle
+    local SetToggle               = A.SetToggle
 
     -- Toggles exposes sur la barre (ordre d'affichage).
     -- Ajouter/retirer une ligne suffit pour changer la barre.
+    -- spell = icone du sort | slot = icone de l'objet equipe (13/14 = trinkets)
     local BUTTONS = {
         { key = "ZerkerDPS",            spell = WR.BerserkerStance,   default = false },
         { key = "ShieldBlock",          spell = WR.ShieldBlock,       default = true  },
@@ -347,6 +371,8 @@ do
         { key = "MaintainDemoShout",    spell = WR.DemoralizingShout, default = false },
         { key = "Interrupt-ShieldBash", spell = WR.ShieldBash,        default = true  },
         { key = "AoE",                  spell = WR.Cleave,            default = false },
+        { key = "UseTrinket1",          slot  = 13, label = "Trinket 1", default = true },
+        { key = "UseTrinket2",          slot  = 14, label = "Trinket 2", default = true },
         { key = "UseShieldWall",        spell = WR.ShieldWall,        default = false },
         { key = "UseLastStand",         spell = WR.LastStand,         default = false },
     }
@@ -404,8 +430,14 @@ do
 
             local icon = btn:CreateTexture(nil, "ARTWORK")
             icon:SetAllPoints(btn)
-            local _, _, spellIcon = GetSpellInfo(entry.spell.ID)
-            icon:SetTexture(spellIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
+            local tex
+            if entry.slot then
+                tex = GetInventoryItemTexture("player", entry.slot)
+            elseif entry.spell then
+                local _, _, spellIcon = GetSpellInfo(entry.spell.ID)
+                tex = spellIcon
+            end
+            icon:SetTexture(tex or "Interface\\Icons\\INV_Misc_QuestionMark")
             icon:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- coupe le bord moche
             btn.icon = icon
 
@@ -430,7 +462,7 @@ do
 
             btn:SetScript("OnEnter", function()
                 GameTooltip:SetOwner(btn, "ANCHOR_TOP")
-                GameTooltip:AddLine((entry.spell:Info()) or entry.key)
+                GameTooltip:AddLine(entry.label or (entry.spell and entry.spell:Info()) or entry.key)
                 if GetState(entry) then
                     GameTooltip:AddLine("AUTO : |cff00ff00ACTIVE|r - clic pour desactiver", 1, 1, 1)
                 else
@@ -455,6 +487,13 @@ do
             elapsedSince = 0
             for j = 1, #bar.buttons do
                 local b = bar.buttons[j]
+                -- icone dynamique des trinkets (suit les swaps d'equipement)
+                if b.entry.slot then
+                    local t = GetInventoryItemTexture("player", b.entry.slot)
+                    if t then
+                        b.icon:SetTexture(t)
+                    end
+                end
                 if GetState(b.entry) then
                     b.icon:SetVertexColor(1, 1, 1)
                     b.border:Show()
