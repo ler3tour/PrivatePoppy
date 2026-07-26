@@ -680,9 +680,34 @@ A[3] = function(icon)
         return A.HeroicStrike:Show(icon)
     end
 
-    -- Stance par defaut : retour en Berserker si la rage ne se perd pas
-    if inStance ~= 3 and not IsOverPowerUP(isTarget) and A.BerserkerStance:IsReady("player") and myRage <= StanceKeepRage() then
-        return A.BerserkerStance:Show(icon)
+    -- Stance par defaut : retour en Berserker Stance, TOUJOURS (posture
+    -- de croisiere Arms : Whirlwind, Pummel, Intercept, Berserker Rage).
+    -- Les actions exigeant Battle/Def (Overpower, Rend, Disarm, Reflect)
+    -- ont deja eu leur chance plus haut dans la priorite. On vide la
+    -- rage excedentaire puis on bascule — jamais de blocage en Battle.
+    if inStance ~= 3 and not (ToggleOr("UseOverpower", true) and IsOverPowerUP(isTarget)) then
+        -- bascule si la perte de rage reste raisonnable
+        if myRage <= StanceKeepRage() + 25 and A.BerserkerStance:IsReady("player") then
+            return A.BerserkerStance:Show(icon)
+        end
+
+        -- dump : MortalStrike (toutes postures) puis Heroic Strike
+        if isTargetInMelee then
+            if A.MortalStrike:IsReady(isTarget) and A.MortalStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.MortalStrike:GetSpellPowerCostCache() then
+                return A.MortalStrike:Show(icon)
+            end
+
+            if not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) then
+                return A.HeroicStrike:Show(icon)
+            end
+
+            return -- HS en file : on laisse le swing consommer la rage
+        end
+
+        -- hors melee : la rage ne sert a rien, bascule immediate
+        if A.BerserkerStance:IsReady("player") then
+            return A.BerserkerStance:Show(icon)
+        end
     end
 end
 
