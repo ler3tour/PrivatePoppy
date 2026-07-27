@@ -102,6 +102,15 @@ local A = setmetatable(Action[Action.PlayerClass], { __index = Action })
 local Temp = {
     AttackTypes               = { "TotalImun", "DamagePhysImun" },
     AuraForKick               = { "TotalImun", "DamagePhysImun", "KickImun" },
+    -- Tables de TOUS les rangs : les buffs/debuffs appliques sont au rang
+    -- max, un check sur l'ID de base seul peut ne pas matcher
+    AuraThunderClap           = { 6343, 8198, 8204, 8205, 11580, 11581, 25264 },
+    AuraDemoShout             = { 1160, 6190, 11554, 11555, 11556, 25202, 25203 },
+    AuraSunderArmor           = { 7386, 7405, 8380, 11596, 11597, 25225 },
+    ShoutAuras                = {
+        BattleShout           = { 6673, 5242, 6192, 11549, 11550, 11551, 25289, 2048 },
+        CommandingShout       = { 469 },
+    },
 }
 
 local function GetStance()
@@ -173,7 +182,7 @@ A[3] = function(icon)
     -- toutes les 2 minutes, aucun cout DPS reel (top logs : 100 %
     -- d'uptime Commanding Shout)
     local shoutToUse = ToggleOr("ShoutToUse", "CommandingShout")
-    if shoutToUse ~= "OFF" and A[shoutToUse] and A[shoutToUse]:IsReady("player") and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() + 1 and (not inCombat or myRage >= A[shoutToUse]:GetSpellPowerCostCache()) then
+    if shoutToUse ~= "OFF" and A[shoutToUse] and A[shoutToUse]:IsReady("player") and Unit("player"):HasBuffs(Temp.ShoutAuras[shoutToUse] or A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() + 1 and (not inCombat or myRage >= A[shoutToUse]:GetSpellPowerCostCache()) then
         return A[shoutToUse]:Show(icon)
     end
 
@@ -338,12 +347,12 @@ A[3] = function(icon)
 
     -- ThunderClap : maintien du debuff (toggle — OFF = plus de DPS si un
     -- autre guerrier l'applique)
-    if ToggleOr("MaintainThunderClap", false) and A.ThunderClap:IsReady(isTarget, true) and myRage >= A.ThunderClap:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffs(A.ThunderClap.ID) <= GetGCD() + GetCurrentGCD() and A.ThunderClap:AbsentImun(isTarget, Temp.AttackTypes) then
+    if ToggleOr("MaintainThunderClap", false) and A.ThunderClap:IsReady(isTarget, true) and myRage >= A.ThunderClap:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffs(Temp.AuraThunderClap) <= GetGCD() + GetCurrentGCD() and A.ThunderClap:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.ThunderClap:Show(icon)
     end
 
     -- DemoralizingShout : maintien (toggle, OFF par defaut = DPS)
-    if ToggleOr("MaintainDemoShout", false) and A.DemoralizingShout:IsReady(isTarget, true) and myRage >= A.DemoralizingShout:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffs(A.DemoralizingShout.ID) <= GetGCD() + GetCurrentGCD() and A.DemoralizingShout:AbsentImun(isTarget, Temp.AttackTypes) then
+    if ToggleOr("MaintainDemoShout", false) and A.DemoralizingShout:IsReady(isTarget, true) and myRage >= A.DemoralizingShout:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffs(Temp.AuraDemoShout) <= GetGCD() + GetCurrentGCD() and A.DemoralizingShout:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.DemoralizingShout:Show(icon)
     end
 
@@ -373,7 +382,7 @@ A[3] = function(icon)
             return A.Devastate:Show(icon)
         end
     else
-        if A.SunderArmor:IsReady(isTarget) and myRage >= A.SunderArmor:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffsStacks(A.SunderArmor.ID, true) < 5 and A.SunderArmor:AbsentImun(isTarget, Temp.AttackTypes) then
+        if A.SunderArmor:IsReady(isTarget) and myRage >= A.SunderArmor:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffsStacks(Temp.AuraSunderArmor, true) < 5 and A.SunderArmor:AbsentImun(isTarget, Temp.AttackTypes) then
             return A.SunderArmor:Show(icon)
         end
     end

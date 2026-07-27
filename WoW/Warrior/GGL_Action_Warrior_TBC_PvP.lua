@@ -191,6 +191,15 @@ local Temp = {
     AuraForDisarm             = { "TotalImun", "DamagePhysImun", "CCTotalImun" },
     AuraForStun               = { "TotalImun", "CCTotalImun", "StunImun" },
     ReflectUnits              = { "target", "focus", "mouseover", "arena1", "arena2", "arena3", "arena4", "arena5" },
+    -- Tables de TOUS les rangs : les debuffs appliques sont au rang max,
+    -- un check sur l'ID de base seul peut ne pas matcher
+    AuraHamstring             = { 1715, 7372, 7373, 25212 },
+    AuraPiercingHowl          = { 12323 },
+    AuraRend                  = { 772, 6546, 6547, 6548, 11572, 11573, 11574, 25208 },
+    ShoutAuras                = {
+        BattleShout           = { 6673, 5242, 6192, 11549, 11550, 11551, 25289, 2048 },
+        CommandingShout       = { 469 },
+    },
 }
 
 local function GetStance()
@@ -516,7 +525,7 @@ A[3] = function(icon)
 
     -- Shout : Battle ou Commanding selon le dropdown UI
     local shoutToUse = ToggleOr("ShoutToUse", "BattleShout")
-    if shoutToUse ~= "OFF" and A[shoutToUse] and (not inCombat or (not isTarget and not isMouse)) and A[shoutToUse]:IsReady("player") and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() then
+    if shoutToUse ~= "OFF" and A[shoutToUse] and (not inCombat or (not isTarget and not isMouse)) and A[shoutToUse]:IsReady("player") and Unit("player"):HasBuffs(Temp.ShoutAuras[shoutToUse] or A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() then
         return A[shoutToUse]:Show(icon)
     end
 
@@ -570,10 +579,10 @@ A[3] = function(icon)
     end
 
     -- PiercingHowl : snare AoE COMPLEMENTAIRE — Hamstring reste le snare
-    -- principal (15 s, root Imp Hamstring). Le howl ne part que si
-    -- Hamstring n'est pas le bon outil : 2+ ennemis a ralentir dans les
-    -- 10 m, ou Hamstring bloque, et jamais sur une cible deja entravee
-    if ToggleOr("UsePiercingHowl", true) and A.PiercingHowl:IsTalentLearned() and A.PiercingHowl:IsReady("player") and myRage >= A.PiercingHowl:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and Unit(isTarget):GetRange() <= 10 and Unit(isTarget):HasDeBuffs(A.PiercingHowl.ID) == 0 and Unit(isTarget):HasDeBuffs(A.Hamstring.ID) == 0 and Unit(isTarget):IsControlAble("snare") and (MultiUnits:GetBySpell(A.Hamstring, 10) >= 2 or A.Hamstring:IsBlocked() or A.Hamstring:IsBlockedBySpellBook()) then
+    -- principal (15 s, root Imp Hamstring). Le howl ne part que si la
+    -- cible n'est NI entravee NI dazee (check tous rangs) ET qu'il y a
+    -- 2+ ennemis NON ralentis a toucher (ou Hamstring bloque)
+    if ToggleOr("UsePiercingHowl", true) and A.PiercingHowl:IsTalentLearned() and A.PiercingHowl:IsReady("player") and myRage >= A.PiercingHowl:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and Unit(isTarget):GetRange() <= 10 and Unit(isTarget):HasDeBuffs(Temp.AuraPiercingHowl) == 0 and Unit(isTarget):HasDeBuffs(Temp.AuraHamstring) == 0 and Unit(isTarget):IsControlAble("snare") and (MultiUnits:GetByRangeMissedDoTs(10, 2, A.PiercingHowl.ID, 6) >= 2 or A.Hamstring:IsBlocked() or A.Hamstring:IsBlockedBySpellBook()) then
         return A.PiercingHowl:Show(icon)
     end
 
@@ -671,7 +680,7 @@ A[3] = function(icon)
     -- Hamstring : uptime du snare sur les joueurs, en reservant la rage
     -- d'un MortalStrike imminent (avant Rend : une cible qui s'echappe
     -- coute plus cher qu'un restealth potentiel)
-    if ToggleOr("UseHamstring", true) and Unit(isTarget):IsPlayer() and A.Hamstring:IsReady(isTarget) and myRage >= A.Hamstring:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and Unit(isTarget):HasDeBuffs(A.Hamstring.ID) <= GetGCD() + GetCurrentGCD() and Unit(isTarget):IsControlAble("snare") and A.Hamstring:AbsentImun(isTarget, Temp.AttackTypes) then
+    if ToggleOr("UseHamstring", true) and Unit(isTarget):IsPlayer() and A.Hamstring:IsReady(isTarget) and myRage >= A.Hamstring:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and Unit(isTarget):HasDeBuffs(Temp.AuraHamstring) <= GetGCD() + GetCurrentGCD() and Unit(isTarget):IsControlAble("snare") and A.Hamstring:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.Hamstring:Show(icon)
     end
 
@@ -679,7 +688,7 @@ A[3] = function(icon)
     -- stance dance vers Battle si la rage ne se perd pas
     if ToggleOr("UseRend", true) and Unit(isTarget):IsPlayer() and Unit(isTarget):CombatTime() > 0 then
         local targetClass = Unit(isTarget):Class()
-        if (targetClass == "ROGUE" or targetClass == "DRUID") and Unit(isTarget):HasDeBuffs(A.Rend.ID, true) <= GetGCD() + GetCurrentGCD() and myRage >= A.Rend:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Rend:AbsentImun(isTarget, Temp.AttackTypes) then
+        if (targetClass == "ROGUE" or targetClass == "DRUID") and Unit(isTarget):HasDeBuffs(Temp.AuraRend, true) <= GetGCD() + GetCurrentGCD() and myRage >= A.Rend:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Rend:AbsentImun(isTarget, Temp.AttackTypes) then
             if (inStance == 1 or inStance == 2) and A.Rend:IsReady(isTarget) then
                 return A.Rend:Show(icon)
             end
