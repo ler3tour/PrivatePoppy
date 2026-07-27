@@ -28,6 +28,10 @@ local L                            = {
         frFR = "Annule un Coup heroique/Enchainement en file quand Execution est prete ou que la cible devient immunisee" },
     INTERRUPTS                     = { enUS = "Interrupts (kick)",
         frFR = "Interruptions (kick)" },
+    FORCEDEF                       = { enUS = WR.DefensiveStance:Info() .. "\nLock stance",
+        frFR = WR.DefensiveStance:Info() .. "\nVerrouiller la posture" },
+    FORCEDEFTT                     = { enUS = "ON: switches to Defensive Stance and STAYS there until you turn it off — all automatic stance dances are suspended (kicks fall back to Shield Bash, Reflect/Disarm stay available)\nMacro: /run Action.SetToggle({2, \"ForceDefStance\"})",
+        frFR = "ON : bascule en Posture defensive et Y RESTE tant que vous ne le desactivez pas — tous les stance dances automatiques sont suspendus (les kicks passent sur Heurt de bouclier, Renvoi/Desarmement restent disponibles)\nMacro : /run Action.SetToggle({2, \"ForceDefStance\"})" },
     KICK_PUMMEL                    = { enUS = WR.Pummel:Info() .. "\nAuto kick",
         frFR = WR.Pummel:Info() .. "\nKick auto" },
     KICK_PUMMELTT                  = { enUS = "Automatically interrupts enemy casts with " .. WR.Pummel:Info() .. " (Berserker Stance only, no auto stance switch)\nMacro toggle: /run Action.SetToggle({2, \"Interrupt-Pummel\"})",
@@ -213,6 +217,14 @@ ProfileUI[#ProfileUI + 1]                           = {
         DBV           = true,
         L             = L.STOPCAST,
         TT            = L.STOPCASTTT,
+        M             = {},
+    },
+    {
+        E             = "Checkbox",
+        DB            = "ForceDefStance",
+        DBV           = false,
+        L             = L.FORCEDEF,
+        TT            = L.FORCEDEFTT,
         M             = {},
     },
 }
@@ -529,3 +541,201 @@ ProfileUI[#ProfileUI + 1]                           = {
         M             = {},
     },
 }
+
+--------------------------------------------------------------------------
+-- [[ BARRE DE TOGGLES A L'ECRAN - PvP ]]
+-- Boutons cliquables avec le skin (icone) de chaque sort :
+--   - icone en couleur + lisere dore  = ACTIVE
+--   - icone grisee                    = DESACTIVE
+--   - Disarm : clic cycle OFF -> "CD" (on cooldown) -> "BURST"
+--   - "F" = kick @focus | 1er bouton = verrou Posture defensive
+--   - clic gauche : bascule | Shift + glisser : deplacer | /gglbar : masquer
+--------------------------------------------------------------------------
+do
+    local CreateFrame     = _G.CreateFrame
+    local UIParent        = _G.UIParent
+    local GameTooltip     = _G.GameTooltip
+    local GetSpellInfo    = _G.GetSpellInfo
+    local IsShiftKeyDown  = _G.IsShiftKeyDown
+    local GetToggle       = A.GetToggle
+    local SetToggle       = A.SetToggle
+
+    -- cycle : liste de valeurs (clic passe a la suivante), tags affiches
+    local BUTTONS = {
+        { key = "ForceDefStance",       spell = WR.DefensiveStance,    default = false },
+        { key = "Interrupt-Pummel",     spell = WR.Pummel,             default = true  },
+        { key = "Interrupt-Focus",      spell = WR.Pummel,             default = true, tag = "F" },
+        { key = "Interrupt-ShieldBash", spell = WR.ShieldBash,         default = false },
+        { key = "UseSpellReflection",   spell = WR.SpellReflection,    default = true  },
+        { key = "Trigger-Disarm",       spell = WR.Disarm,             default = "ON BURST",
+          cycle = { "OFF", "ON COOLDOWN", "ON BURST" },
+          cycleTags = { ["ON COOLDOWN"] = "CD", ["ON BURST"] = "BURST" } },
+        { key = "UseIntimidatingShout", spell = WR.IntimidatingShout,  default = false },
+        { key = "UsePiercingHowl",      spell = WR.PiercingHowl,       default = true  },
+        { key = "UseHamstring",         spell = WR.Hamstring,          default = true  },
+        { key = "UseIntercept",         spell = WR.Intercept,          default = true  },
+        { key = "UseOverpower",         spell = WR.Overpower,          default = true  },
+    }
+
+    local SIZE, GAP, PAD = 32, 4, 4
+
+    local function GetValue(entry)
+        local value = GetToggle(2, entry.key)
+        if value == nil then
+            return entry.default
+        end
+        return value
+    end
+
+    local function IsActive(entry)
+        local value = GetValue(entry)
+        if entry.cycle then
+            return value ~= "OFF"
+        end
+        return value and true or false
+    end
+
+    local bar = _G.GGLPvPToggleBar
+    if not bar then
+        bar = CreateFrame("Frame", "GGLPvPToggleBar", UIParent)
+        bar:SetWidth(PAD * 2 + #BUTTONS * SIZE + (#BUTTONS - 1) * GAP)
+        bar:SetHeight(PAD * 2 + SIZE)
+        bar:SetPoint("CENTER", UIParent, "CENTER", 0, -220)
+        bar:SetMovable(true)
+        bar:EnableMouse(true)
+        bar:SetClampedToScreen(true)
+        bar:SetFrameStrata("MEDIUM")
+
+        local bg = bar:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(bar)
+        bg:SetTexture(0, 0, 0, 0.45)
+
+        bar.buttons = {}
+
+        local function StartDrag()
+            if IsShiftKeyDown() then
+                bar:StartMoving()
+                bar.isMoving = true
+            end
+        end
+        local function StopDrag()
+            if bar.isMoving then
+                bar:StopMovingOrSizing()
+                bar:SetUserPlaced(true)
+                bar.isMoving = false
+            end
+        end
+        bar:RegisterForDrag("LeftButton")
+        bar:SetScript("OnDragStart", StartDrag)
+        bar:SetScript("OnDragStop", StopDrag)
+
+        for i = 1, #BUTTONS do
+            local entry = BUTTONS[i]
+            local btn = CreateFrame("Button", "GGLPvPToggleButton" .. i, bar)
+            btn:SetWidth(SIZE)
+            btn:SetHeight(SIZE)
+            btn:SetPoint("LEFT", bar, "LEFT", PAD + (i - 1) * (SIZE + GAP), 0)
+
+            local icon = btn:CreateTexture(nil, "ARTWORK")
+            icon:SetAllPoints(btn)
+            local _, _, spellIcon = GetSpellInfo(entry.spell.ID)
+            icon:SetTexture(spellIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
+            icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+            btn.icon = icon
+
+            local border = btn:CreateTexture(nil, "OVERLAY")
+            border:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+            border:SetBlendMode("ADD")
+            border:SetPoint("CENTER", btn, "CENTER", 0, 0)
+            border:SetWidth(SIZE * 1.7)
+            border:SetHeight(SIZE * 1.7)
+            btn.border = border
+
+            -- tag statique ("F" pour le kick focus)
+            if entry.tag then
+                local tagText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                tagText:SetPoint("TOPRIGHT", btn, "TOPRIGHT", -1, -1)
+                tagText:SetText(entry.tag)
+            end
+
+            -- tag dynamique (etats du cycle Disarm)
+            if entry.cycle then
+                local cycleText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                cycleText:SetPoint("BOTTOM", btn, "BOTTOM", 0, 1)
+                btn.cycleText = cycleText
+            end
+
+            btn.entry = entry
+
+            btn:RegisterForDrag("LeftButton")
+            btn:SetScript("OnDragStart", StartDrag)
+            btn:SetScript("OnDragStop", StopDrag)
+
+            btn:SetScript("OnClick", function()
+                if entry.cycle then
+                    local current = GetValue(entry)
+                    local nextIndex = 1
+                    for c = 1, #entry.cycle do
+                        if entry.cycle[c] == current then
+                            nextIndex = (c % #entry.cycle) + 1
+                            break
+                        end
+                    end
+                    SetToggle({ 2, entry.key }, entry.cycle[nextIndex])
+                else
+                    SetToggle({ 2, entry.key })
+                end
+            end)
+
+            btn:SetScript("OnEnter", function()
+                GameTooltip:SetOwner(btn, "ANCHOR_TOP")
+                GameTooltip:AddLine((entry.spell:Info()) or entry.key)
+                local value = GetValue(entry)
+                if entry.cycle then
+                    GameTooltip:AddLine("Mode : |cff00ff00" .. tostring(value) .. "|r - clic pour changer", 1, 1, 1)
+                elseif IsActive(entry) then
+                    GameTooltip:AddLine("|cff00ff00ACTIVE|r - clic pour desactiver", 1, 1, 1)
+                else
+                    GameTooltip:AddLine("|cffff2020DESACTIVE|r - clic pour activer", 1, 1, 1)
+                end
+                GameTooltip:AddLine("Shift + glisser : deplacer la barre", 0.6, 0.6, 0.6)
+                GameTooltip:Show()
+            end)
+            btn:SetScript("OnLeave", function()
+                GameTooltip:Hide()
+            end)
+
+            bar.buttons[i] = btn
+        end
+
+        local elapsedSince = 0
+        bar:SetScript("OnUpdate", function(self, elapsed)
+            elapsedSince = elapsedSince + (elapsed or _G.arg1 or 0.02)
+            if elapsedSince < 0.2 then return end
+            elapsedSince = 0
+            for j = 1, #bar.buttons do
+                local b = bar.buttons[j]
+                if IsActive(b.entry) then
+                    b.icon:SetVertexColor(1, 1, 1)
+                    b.border:Show()
+                else
+                    b.icon:SetVertexColor(0.25, 0.25, 0.25)
+                    b.border:Hide()
+                end
+                if b.cycleText then
+                    local value = GetValue(b.entry)
+                    b.cycleText:SetText((b.entry.cycleTags and b.entry.cycleTags[value]) or "")
+                end
+            end
+        end)
+
+        _G.SLASH_GGLBAR1 = "/gglbar"
+        _G.SlashCmdList["GGLBAR"] = function()
+            if bar:IsShown() then
+                bar:Hide()
+            else
+                bar:Show()
+            end
+        end
+    end
+end

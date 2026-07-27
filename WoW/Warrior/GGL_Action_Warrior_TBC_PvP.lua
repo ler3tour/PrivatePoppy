@@ -397,6 +397,17 @@ A[3] = function(icon)
     end
 
     ----------------------------------------------------------------------
+    -- [[ POSTURE DEFENSIVE FORCEE ]] (bouton de la barre)
+    -- ON : bascule en Def et Y RESTE tant que le toggle est actif —
+    -- tous les stance dances automatiques sont suspendus. Les kicks
+    -- passent sur Shield Bash, Reflect/Disarm restent disponibles.
+    ----------------------------------------------------------------------
+    local forceDef = ToggleOr("ForceDefStance", false)
+    if forceDef and inStance ~= 2 and A.DefensiveStance:IsReady("player") then
+        return A.DefensiveStance:Show(icon)
+    end
+
+    ----------------------------------------------------------------------
     -- [[ SPELL REFLECTION ]]
     -- Toggle a la volee : /run Action.SetToggle({2, "UseSpellReflection"})
     -- Etapes rejouees a chaque tick : swap bouclier -> stance -> reflect
@@ -439,7 +450,7 @@ A[3] = function(icon)
             end
 
             -- Stance dance d'urgence : etre feared coute plus cher que la rage
-            if inStance ~= 3 and fearCastLeft > 0.8 and A.BerserkerStance:IsReady("player") then
+            if not forceDef and inStance ~= 3 and fearCastLeft > 0.8 and A.BerserkerStance:IsReady("player") then
                 return A.BerserkerStance:Show(icon)
             end
         end
@@ -519,7 +530,7 @@ A[3] = function(icon)
         end
 
         -- Charge (BattleStance requis)
-        if A.Charge:IsReady(isMouse or isTarget, nil, nil, nil, true) then
+        if not forceDef and A.Charge:IsReady(isMouse or isTarget, nil, nil, nil, true) then
             if inStance ~= 1 and A.BattleStance:IsReady("player") then
                 return A.BattleStance:Show(icon)
             end
@@ -531,7 +542,7 @@ A[3] = function(icon)
 
     -- Intercept : gap-closer (stun)
     if ToggleOr("UseIntercept", true) and inCombat and not isMouseInMelee and not isTargetInMelee and A.Intercept:IsReady(isMouse or isTarget, nil, nil, nil, true) and (A.Intercept:AbsentImun(isMouse or isTarget, Temp.AuraForStun) or Unit(isMouse or isTarget):HasBuffs(A.FreeActionPotion.ID) > 0) and A.Charge:GetSpellTimeSinceLastCast() > 2 then
-        if inStance ~= 3 and A.BerserkerStance:IsReady("player") and StanceKeepRage() >= A.Intercept:GetSpellPowerCostCache() then
+        if not forceDef and inStance ~= 3 and A.BerserkerStance:IsReady("player") and StanceKeepRage() >= A.Intercept:GetSpellPowerCostCache() then
             return A.BerserkerStance:Show(icon)
         end
         if inStance == 3 and A.Intercept:IsReady(isMouse or isTarget) then
@@ -552,8 +563,11 @@ A[3] = function(icon)
         return A.IntimidatingShout:Show(icon)
     end
 
-    -- PiercingHowl : snare AoE si la cible n'est pas deja ralentie
-    if ToggleOr("UsePiercingHowl", true) and A.PiercingHowl:IsTalentLearned() and A.PiercingHowl:IsReady("player") and myRage >= A.PiercingHowl:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and Unit(isTarget):GetRange() <= 10 and Unit(isTarget):HasDeBuffs(A.PiercingHowl.ID) == 0 and Unit(isTarget):IsControlAble("snare") then
+    -- PiercingHowl : snare AoE COMPLEMENTAIRE — Hamstring reste le snare
+    -- principal (15 s, root Imp Hamstring). Le howl ne part que si
+    -- Hamstring n'est pas le bon outil : 2+ ennemis a ralentir dans les
+    -- 10 m, ou Hamstring bloque, et jamais sur une cible deja entravee
+    if ToggleOr("UsePiercingHowl", true) and A.PiercingHowl:IsTalentLearned() and A.PiercingHowl:IsReady("player") and myRage >= A.PiercingHowl:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and Unit(isTarget):GetRange() <= 10 and Unit(isTarget):HasDeBuffs(A.PiercingHowl.ID) == 0 and Unit(isTarget):HasDeBuffs(A.Hamstring.ID) == 0 and Unit(isTarget):IsControlAble("snare") and (MultiUnits:GetBySpell(A.Hamstring, 10) >= 2 or A.Hamstring:IsBlocked() or A.Hamstring:IsBlockedBySpellBook()) then
         return A.PiercingHowl:Show(icon)
     end
 
@@ -611,7 +625,7 @@ A[3] = function(icon)
             return A.Overpower:Show(icon)
         end
 
-        if inStance ~= 1 and A.BattleStance:IsReady("player") and myRage - StanceKeepRage() <= 10 + A.Overpower:GetSpellPowerCostCache() then
+        if not forceDef and inStance ~= 1 and A.BattleStance:IsReady("player") and myRage - StanceKeepRage() <= 10 + A.Overpower:GetSpellPowerCostCache() then
             return A.BattleStance:Show(icon)
         end
     end
@@ -664,7 +678,7 @@ A[3] = function(icon)
                 return A.Rend:Show(icon)
             end
 
-            if inStance == 3 and A.Rend:GetCooldown() == 0 and A.BattleStance:IsReady("player") and myRage - StanceKeepRage() <= 10 + A.Rend:GetSpellPowerCostCache() then
+            if not forceDef and inStance == 3 and A.Rend:GetCooldown() == 0 and A.BattleStance:IsReady("player") and myRage - StanceKeepRage() <= 10 + A.Rend:GetSpellPowerCostCache() then
                 return A.BattleStance:Show(icon)
             end
         end
@@ -685,7 +699,7 @@ A[3] = function(icon)
     -- Les actions exigeant Battle/Def (Overpower, Rend, Disarm, Reflect)
     -- ont deja eu leur chance plus haut dans la priorite. On vide la
     -- rage excedentaire puis on bascule — jamais de blocage en Battle.
-    if inStance ~= 3 and not (ToggleOr("UseOverpower", true) and IsOverPowerUP(isTarget)) then
+    if not forceDef and inStance ~= 3 and not (ToggleOr("UseOverpower", true) and IsOverPowerUP(isTarget)) then
         -- bascule si la perte de rage reste raisonnable
         if myRage <= StanceKeepRage() + 25 and A.BerserkerStance:IsReady("player") then
             return A.BerserkerStance:Show(icon)
