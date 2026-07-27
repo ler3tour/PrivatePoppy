@@ -432,8 +432,10 @@ A[3] = function(icon)
         end
     end
 
-    -- Retour dual-wield / 2H apres le reflect (hors fenetre de cast ennemie)
-    if ToggleOr("SpellReflection-AutoSwap", true) and Player:HasShield(true) and not GetReflectUnit() and (A.SpellReflection:GetCooldown() > 3 or Unit("player"):HasBuffs(A.SpellReflection.ID, true) > 0 or not ToggleOr("UseSpellReflection", true)) then
+    -- Retour dual-wield / 2H apres le reflect (hors fenetre de cast
+    -- ennemie) — uniquement si une arme est disponible en sac, sinon le
+    -- bloc tournerait en boucle et gelerait toute la rotation
+    if ToggleOr("SpellReflection-AutoSwap", true) and Player:HasShield(true) and ((not Player:HasWeaponTwoHand(true) and Player:HasWeaponTwoHand()) or (not Player:HasWeaponOffHand(true) and Player:HasWeaponOffHand())) and not GetReflectUnit() and (A.SpellReflection:GetCooldown() > 3 or Unit("player"):HasBuffs(A.SpellReflection.ID, true) > 0 or not ToggleOr("UseSpellReflection", true)) then
         return A.SwapWeapon:Show(icon)
     end
 
@@ -550,8 +552,12 @@ A[3] = function(icon)
         end
     end
 
-    -- Return : rien a faire hors melee
+    -- Hors melee : d'abord revenir en Berserker — posture de poursuite
+    -- (Intercept, Berserker Rage), la rage ne sert a rien hors de portee
     if not isTargetInMelee then
+        if not forceDef and inStance ~= 3 and A.BerserkerStance:IsReady("player") then
+            return A.BerserkerStance:Show(icon)
+        end
         return -- nil
     end
 
@@ -700,12 +706,16 @@ A[3] = function(icon)
     -- ont deja eu leur chance plus haut dans la priorite. On vide la
     -- rage excedentaire puis on bascule — jamais de blocage en Battle.
     if not forceDef and inStance ~= 3 and not (ToggleOr("UseOverpower", true) and IsOverPowerUP(isTarget)) then
-        -- bascule si la perte de rage reste raisonnable
+        -- bascule directe si la perte de rage est faible
         if myRage <= StanceKeepRage() + 25 and A.BerserkerStance:IsReady("player") then
             return A.BerserkerStance:Show(icon)
         end
 
-        -- dump : MortalStrike (toutes postures) puis Heroic Strike
+        -- dump rapide (un MortalStrike + un Heroic Strike en file) puis
+        -- bascule QUOI QU'IL ARRIVE : en PvP la rage entrante depasse
+        -- souvent ce qu'un dump evacue — attendre d'etre "pauvre en rage"
+        -- bloquerait la posture Berserker (Whirlwind/Pummel/Intercept)
+        -- pour tout le combat
         if isTargetInMelee then
             if A.MortalStrike:IsReady(isTarget) and A.MortalStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.MortalStrike:GetSpellPowerCostCache() then
                 return A.MortalStrike:Show(icon)
@@ -714,11 +724,10 @@ A[3] = function(icon)
             if not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) then
                 return A.HeroicStrike:Show(icon)
             end
-
-            return -- HS en file : on laisse le swing consommer la rage
         end
 
-        -- hors melee : la rage ne sert a rien, bascule immediate
+        -- bascule inconditionnelle (la rage au-dela de Tactical Mastery
+        -- est perdue : assume, c'est le jeu du guerrier Arms)
         if A.BerserkerStance:IsReady("player") then
             return A.BerserkerStance:Show(icon)
         end
