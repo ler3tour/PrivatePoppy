@@ -168,9 +168,12 @@ A[3] = function(icon)
         end
     end
 
-    -- Shout : hors combat / pas de cible
+    -- Shout : maintien permanent, PRIORITE HAUTE — en combat, hors
+    -- combat, en melee ou pas (phases de downtime incluses). Un GCD
+    -- toutes les 2 minutes, aucun cout DPS reel (top logs : 100 %
+    -- d'uptime Commanding Shout)
     local shoutToUse = ToggleOr("ShoutToUse", "CommandingShout")
-    if shoutToUse ~= "OFF" and A[shoutToUse] and (not inCombat or not isTarget) and A[shoutToUse]:IsReady("player") and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() then
+    if shoutToUse ~= "OFF" and A[shoutToUse] and A[shoutToUse]:IsReady("player") and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() + 1 and (not inCombat or myRage >= A[shoutToUse]:GetSpellPowerCostCache()) then
         return A[shoutToUse]:Show(icon)
     end
 
@@ -353,13 +356,6 @@ A[3] = function(icon)
     -- (la posture requise est geree par IsReady — actif en mode tank)
     if A.Revenge:IsReady(isTarget) and myRage >= A.Revenge:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Revenge:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.Revenge:Show(icon)
-    end
-
-    -- Shout : refresh EN combat (top logs : 100 % d'uptime Commanding
-    -- Shout). PLACE AVANT les fillers (Whirlwind/Devastate mangent
-    -- chaque GCD libre, le cri n'aurait jamais son tour apres eux)
-    if shoutToUse ~= "OFF" and A[shoutToUse] and inCombat and A[shoutToUse]:IsReady("player") and myRage >= A[shoutToUse]:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit("player"):HasBuffs(A[shoutToUse].ID) <= GetGCD() + GetCurrentGCD() + 1 then
-        return A[shoutToUse]:Show(icon)
     end
 
     -- Whirlwind : on cooldown en Berserker Stance (top logs : ~2.9 CPM),
