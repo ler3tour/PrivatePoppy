@@ -61,6 +61,7 @@ Action[Action.PlayerClass] = {
     Evasion                   = Create({ Type = "Spell", ID = 5277,  useMaxRank = true                         }),
     CloakofShadows            = Create({ Type = "Spell", ID = 31224                                            }), -- TBC only
     Stealth                   = Create({ Type = "Spell", ID = 1784,  useMaxRank = true                         }),
+    Garrote                   = Create({ Type = "Spell", ID = 703,   useMaxRank = true                         }),
     -- Consumables (usage releve top logs : sappers meme en mono-cible)
     ThistleTea                = Create({ Type = "Item",   ID = 7676                                            }),
     HastePotion               = Create({ Type = "Potion", ID = 22838                                           }),
@@ -125,8 +126,20 @@ A[3] = function(icon)
         isTargetInMelee                   = InMelee(isTarget)
     end
 
-    -- En camouflage : on laisse le joueur choisir son opener
+    -- En camouflage : opener des top logs = Sinister Strike direct
+    -- (pas de Garrote/Cheap Shot dans leurs casts — CS inutile sur boss,
+    -- Garrote retarde SnD). Toggle Garrote pour ceux qui y tiennent
     if isStealthed then
+        if isTarget and isTargetInMelee then
+            if ToggleOr("Opener-Garrote", false) and A.Garrote:IsReady(isTarget) and energy >= A.Garrote:GetSpellPowerCostCache() and A.Garrote:AbsentImun(isTarget, Temp.AttackTypes) then
+                return A.Garrote:Show(icon)
+            end
+
+            local opener = GetBuilder()
+            if opener:IsReady(isTarget) and energy >= opener:GetSpellPowerCostCache() and opener:AbsentImun(isTarget, Temp.AttackTypes) then
+                return opener:Show(icon)
+            end
+        end
         return -- nil
     end
 
