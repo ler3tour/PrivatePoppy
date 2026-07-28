@@ -552,6 +552,7 @@ ProfileUI[#ProfileUI + 1]                           = {
 --   - clic gauche : bascule | Shift + glisser : deplacer | /gglbar : masquer
 --------------------------------------------------------------------------
 do
+    local TMW             = _G.TMW
     local CreateFrame     = _G.CreateFrame
     local UIParent        = _G.UIParent
     local GameTooltip     = _G.GameTooltip
@@ -576,6 +577,27 @@ do
         { key = "UseIntercept",         spell = WR.Intercept,          default = true  },
         { key = "UseOverpower",         spell = WR.Overpower,          default = true  },
     }
+
+
+    -- Acces direct a la base de reglages (Action.SetToggle refuse les
+    -- cles pas encore initialisees : "X is not found!") — on seme les
+    -- valeurs par defaut nous-memes et on ecrit directement, comme le
+    -- fait le code GGL d'origine (TMW.db.profile.ActionDB[2])
+    local function GetDB()
+        return TMW.db and TMW.db.profile and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[2]
+    end
+
+    local function SeedDefaults()
+        local db = GetDB()
+        if not db then return end
+        for i = 1, #BUTTONS do
+            local e = BUTTONS[i]
+            if db[e.key] == nil then
+                db[e.key] = e.default
+            end
+        end
+    end
+    SeedDefaults()
 
     local SIZE, GAP, PAD = 32, 4, 4
 
@@ -672,6 +694,8 @@ do
             btn:SetScript("OnDragStop", StopDrag)
 
             btn:SetScript("OnClick", function()
+                local db = GetDB()
+                if not db then return end
                 if entry.cycle then
                     local current = GetValue(entry)
                     local nextIndex = 1
@@ -681,9 +705,13 @@ do
                             break
                         end
                     end
-                    SetToggle({ 2, entry.key }, entry.cycle[nextIndex])
+                    db[entry.key] = entry.cycle[nextIndex]
                 else
-                    SetToggle({ 2, entry.key })
+                    local current = db[entry.key]
+                    if current == nil then
+                        current = entry.default
+                    end
+                    db[entry.key] = not current
                 end
             end)
 
@@ -713,6 +741,7 @@ do
             elapsedSince = elapsedSince + (elapsed or _G.arg1 or 0.02)
             if elapsedSince < 0.2 then return end
             elapsedSince = 0
+            SeedDefaults()
             for j = 1, #bar.buttons do
                 local b = bar.buttons[j]
                 if IsActive(b.entry) then
