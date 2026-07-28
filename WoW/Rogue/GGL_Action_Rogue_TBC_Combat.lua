@@ -61,9 +61,11 @@ Action[Action.PlayerClass] = {
     Evasion                   = Create({ Type = "Spell", ID = 5277,  useMaxRank = true                         }),
     CloakofShadows            = Create({ Type = "Spell", ID = 31224                                            }), -- TBC only
     Stealth                   = Create({ Type = "Spell", ID = 1784,  useMaxRank = true                         }),
-    -- Consumables
+    -- Consumables (usage releve top logs : sappers meme en mono-cible)
     ThistleTea                = Create({ Type = "Item",   ID = 7676                                            }),
     HastePotion               = Create({ Type = "Potion", ID = 22838                                           }),
+    SuperSapperCharge         = Create({ Type = "Item",   ID = 23827                                           }),
+    GoblinSapperCharge        = Create({ Type = "Item",   ID = 10646                                           }),
     -- Hidden (talents trackes)
     ImprovedSliceandDice      = Create({ Type = "Spell", ID = 14165, Hidden = true, isTalent = true, useMaxRank = true }),
     ImprovedSinisterStrike    = Create({ Type = "Spell", ID = 13732, Hidden = true, isTalent = true, useMaxRank = true }),
@@ -183,6 +185,16 @@ A[3] = function(icon)
         if ToggleOr("HastePotion", true) and Unit(isTarget):IsBoss() and A.HastePotion:IsReady("player") and (Unit("player"):HasBuffs(A.AdrenalineRush.ID, true) > 0 or A.AdrenalineRush:GetCooldown() > 120 or not ToggleOr("UseAdrenalineRush", true)) then
             return A.HastePotion:Show(icon)
         end
+
+        -- Sappers : releve top logs, utilises meme en mono-cible sur boss
+        if ToggleOr("UseSappers", true) and Unit(isTarget):IsBoss() then
+            if A.SuperSapperCharge:IsReady("player") then
+                return A.SuperSapperCharge:Show(icon)
+            end
+            if A.GoblinSapperCharge:IsReady("player") then
+                return A.GoblinSapperCharge:Show(icon)
+            end
+        end
     end
 
     -- ThistleTea : creux d'energie (hors GCD)
@@ -203,20 +215,29 @@ A[3] = function(icon)
         return A.SliceandDice:Show(icon)
     end
 
-    -- Rupture : 5 CP, SnD couvert, cible qui vit assez longtemps
-    if ToggleOr("UseRupture", true) and comboPoints >= 5 and buffSnD > 4 and Unit(isTarget):HasDeBuffs(Temp.AuraRupture, true) == 0 and Unit(isTarget):TimeToDie() > 12 and energy >= A.Rupture:GetSpellPowerCostCache() and A.Rupture:IsReady(isTarget) and A.Rupture:AbsentImun(isTarget, Temp.AttackTypes) then
-        return A.Rupture:Show(icon)
-    end
+    local useExposeArmor = ToggleOr("UseExposeArmor", true)
+    local debuffEA       = Unit(isTarget):HasDeBuffs(Temp.AuraExposeArmor)
 
-    -- ExposeArmor : 5 CP si assigne (toggle OFF par defaut) et pas de
-    -- Sunder Armor de guerrier sur la cible
-    if ToggleOr("UseExposeArmor", false) and comboPoints >= 5 and Unit(isTarget):HasDeBuffs(Temp.AuraExposeArmor) <= 3 and Unit(isTarget):HasDeBuffs(Temp.AuraSunderArmor) == 0 and energy >= A.ExposeArmor:GetSpellPowerCostCache() and A.ExposeArmor:IsReady(isTarget) then
+    -- ExposeArmor : 5 CP, DOUBLE UPTIME avec SnD — le cycle des top logs
+    -- (EA maintenu a 90-99 %). Refresh sous 5 s restantes, ignore si un
+    -- guerrier maintient Sunder Armor
+    if useExposeArmor and comboPoints >= 5 and debuffEA <= 5 and Unit(isTarget):HasDeBuffs(Temp.AuraSunderArmor) == 0 and Unit(isTarget):TimeToDie() > 8 and energy >= A.ExposeArmor:GetSpellPowerCostCache() and A.ExposeArmor:IsReady(isTarget) then
         return A.ExposeArmor:Show(icon)
     end
 
-    -- Eviscerate : 5 CP seulement quand SnD ET Rupture sont couverts
-    -- (ou la cible meurt : dump)
-    if ToggleOr("UseEviscerate", true) and comboPoints >= 5 and energy >= A.Eviscerate:GetSpellPowerCostCache() and A.Eviscerate:IsReady(isTarget) and A.Eviscerate:AbsentImun(isTarget, Temp.AttackTypes) and (Unit(isTarget):TimeToDie() <= 6 or (buffSnD > 6 and (not ToggleOr("UseRupture", true) or Unit(isTarget):HasDeBuffs(Temp.AuraRupture, true) > 4))) then
+    -- Garde CP : si EA expire bientot, on reserve les 5 CP pour lui
+    local holdForEA = useExposeArmor and debuffEA > 0 and debuffEA <= 8 and Unit(isTarget):HasDeBuffs(Temp.AuraSunderArmor) == 0
+
+    -- Rupture : optionnel (top logs : 1-2 casts en debut de combat,
+    -- aucun sur les combats longs) — seulement quand SnD et EA sont
+    -- larges et que rien d'autre ne reclame les CP
+    if ToggleOr("UseRupture", true) and not holdForEA and comboPoints >= 5 and buffSnD > 6 and Unit(isTarget):HasDeBuffs(Temp.AuraRupture, true) == 0 and Unit(isTarget):TimeToDie() > 16 and energy >= A.Rupture:GetSpellPowerCostCache() and A.Rupture:IsReady(isTarget) and A.Rupture:AbsentImun(isTarget, Temp.AttackTypes) then
+        return A.Rupture:Show(icon)
+    end
+
+    -- Eviscerate : dump 5 CP quand SnD (et EA) sont couverts, ou cible
+    -- mourante
+    if ToggleOr("UseEviscerate", true) and not holdForEA and comboPoints >= 5 and energy >= A.Eviscerate:GetSpellPowerCostCache() and A.Eviscerate:IsReady(isTarget) and A.Eviscerate:AbsentImun(isTarget, Temp.AttackTypes) and (Unit(isTarget):TimeToDie() <= 6 or (buffSnD > 6 and (not useExposeArmor or debuffEA > 8 or Unit(isTarget):HasDeBuffs(Temp.AuraSunderArmor) > 0))) then
         return A.Eviscerate:Show(icon)
     end
 
