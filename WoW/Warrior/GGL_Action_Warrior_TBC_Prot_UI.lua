@@ -543,3 +543,365 @@ do
         end
     end
 end
+
+
+-- Configuration du panneau overlay
+local GGL_ColorHex = "|cffb16bff"
+local GGL_PANEL_TITLE = "GGL — WARRIOR PROT"
+local GGL_PANEL_SECTIONS = {
+    { title = "ROTATION", items = {
+        { type = "check", key = "ZerkerDPS", label = "Mode Zerker DPS (top logs)", default = false, tooltip = "Berserker Stance quand vous ne tankez pas" },
+        { type = "check", key = "ShieldBlock", label = "Shield Block on cooldown", default = true, tooltip = "Anti-crush + procs Revenge" },
+        { type = "check", key = "MaintainThunderClap", label = "Thunder Clap (maintien)", default = true, tooltip = "OFF si un autre guerrier l'applique" },
+        { type = "check", key = "MaintainDemoShout", label = "Demoralizing Shout (maintien)", default = false, tooltip = "Coute un GCD" },
+        { type = "check", key = "Interrupt-ShieldBash", label = "Shield Bash (kick auto)", default = true, tooltip = "" },
+        { type = "check", key = "AoE", label = "Mode AoE (Cleave)", default = false, tooltip = "" },
+        { type = "check", key = "StopCast", label = "Stop cast HS/Cleave", default = true, tooltip = "" },
+    } },
+    { title = "BURST", items = {
+        { type = "check", key = "UseTrinket1", label = "Trinket 1 (slot haut)", default = true, tooltip = "" },
+        { type = "check", key = "UseTrinket2", label = "Trinket 2 (slot bas)", default = true, tooltip = "" },
+        { type = "check", key = "HastePotion", label = "Haste Potion (boss)", default = true, tooltip = "" },
+        { type = "check", key = "SuperSapperCharge", label = "Super Sapper (AoE 3+)", default = false, tooltip = "Ingenierie requise" },
+        { type = "check", key = "MightyRagePotion", label = "Mighty Rage Potion", default = false, tooltip = "Si rage < 25 en burst" },
+        { type = "check", key = "BerserkerRage-Dance", label = "Berserker Rage dance (rage)", default = false, tooltip = "Risque en tanking actif" },
+    } },
+    { title = "REGLAGES", items = {
+        { type = "cycle", key = "ShoutToUse", label = "Cri utilise", default = "CommandingShout", options = { { text = "Command.", value = "CommandingShout", width = 64 }, { text = "Battle", value = "BattleShout", width = 48 }, { text = "OFF", value = "OFF", width = 36 } }, tooltip = "Commanding = PV max, Battle = AP" },
+        { type = "slider", key = "HeroicStrike-PWR", label = "Heroic Strike >= rage", min = 30, max = 100, default = 40, suffix = "", tooltip = "Seuil de vidange" },
+        { type = "slider", key = "Cleave-PWR", label = "Cleave >= rage", min = 20, max = 100, default = 50, suffix = "", tooltip = "" },
+        { type = "slider", key = "Bloodrage-LimitHP", label = "Bloodrage >= PV", min = 0, max = 100, default = 35, suffix = "%", tooltip = "" },
+    } },
+    { title = "DEFENSE (manuel par defaut)", items = {
+        { type = "check", key = "UseShieldWall", label = "Shield Wall auto", default = false, tooltip = "OFF = controle manuel" },
+        { type = "slider", key = "ShieldWallHP", label = "Shield Wall <= PV", min = 0, max = 100, default = 25, suffix = "%", tooltip = "" },
+        { type = "check", key = "UseLastStand", label = "Last Stand auto", default = false, tooltip = "OFF = controle manuel" },
+        { type = "slider", key = "LastStandHP", label = "Last Stand <= PV", min = 0, max = 100, default = 35, suffix = "%", tooltip = "" },
+    } },
+}
+
+--------------------------------------------------------------------------
+-- [[ OVERLAY "GGL ROTATIONS" ]] — panneau d'options style Magic Rotations
+-- /gglui : afficher/masquer | glisser la barre de titre pour deplacer
+-- Molette : scroll | Tout est synchronise avec /action et la barre
+--------------------------------------------------------------------------
+do
+    local TMW             = _G.TMW
+    local CreateFrame     = _G.CreateFrame
+    local UIParent        = _G.UIParent
+    local GameTooltip     = _G.GameTooltip
+    local GetToggle       = A.GetToggle
+
+    local PANEL_NAME      = "GGLPanel" .. (A.PlayerClass or "X")
+    if _G[PANEL_NAME] then return end
+
+    -- Palette (style Magic Rotations)
+    local C = {
+        bg        = { 0.05, 0.05, 0.07, 0.96 },
+        card      = { 0.09, 0.09, 0.13, 0.95 },
+        title     = "|cffb16bff",
+        section   = { 0.69, 0.42, 1.00 },
+        accent    = { 0.55, 0.36, 0.96 },
+        accentHi  = { 0.66, 0.47, 1.00 },
+        boxOff    = { 0.16, 0.16, 0.22, 1 },
+        text      = { 0.92, 0.92, 0.95 },
+        textDim   = { 0.55, 0.55, 0.62 },
+        track     = { 0.20, 0.20, 0.28, 1 },
+    }
+
+    local function GetDB()
+        return TMW.db and TMW.db.profile and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[2]
+    end
+
+    local function DBGet(key, default)
+        local db = GetDB()
+        local v = db and db[key]
+        if v == nil then return default end
+        return v
+    end
+
+    local function DBSet(key, value)
+        local db = GetDB()
+        if db then db[key] = value end
+    end
+
+    -- semis des defauts
+    for s = 1, #GGL_PANEL_SECTIONS do
+        local items = GGL_PANEL_SECTIONS[s].items
+        for it = 1, #items do
+            local e = items[it]
+            if e.key then
+                local db = GetDB()
+                if db and db[e.key] == nil then db[e.key] = e.default end
+            end
+        end
+    end
+
+    local WIDTH, HEIGHT, PAD = 400, 560, 10
+
+    local panel = CreateFrame("Frame", PANEL_NAME, UIParent)
+    panel:SetWidth(WIDTH)
+    panel:SetHeight(HEIGHT)
+    panel:SetPoint("CENTER", UIParent, "CENTER", 220, 0)
+    panel:SetMovable(true)
+    panel:SetClampedToScreen(true)
+    panel:SetFrameStrata("HIGH")
+    panel:EnableMouse(true)
+    panel:EnableMouseWheel(true)
+
+    local bg = panel:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(panel)
+    bg:SetTexture(C.bg[1], C.bg[2], C.bg[3], C.bg[4])
+
+    -- barre de titre
+    local titleBar = CreateFrame("Frame", nil, panel)
+    titleBar:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, 0)
+    titleBar:SetPoint("TOPRIGHT", panel, "TOPRIGHT", 0, 0)
+    titleBar:SetHeight(30)
+    titleBar:EnableMouse(true)
+    local tbg = titleBar:CreateTexture(nil, "BACKGROUND")
+    tbg:SetAllPoints(titleBar)
+    tbg:SetTexture(0.08, 0.07, 0.12, 1)
+    local titleText = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    titleText:SetPoint("LEFT", titleBar, "LEFT", 10, 0)
+    titleText:SetText(C.title .. GGL_PANEL_TITLE .. "|r")
+    titleBar:RegisterForDrag("LeftButton")
+    titleBar:SetScript("OnDragStart", function() panel:StartMoving() end)
+    titleBar:SetScript("OnDragStop", function()
+        panel:StopMovingOrSizing()
+        panel:SetUserPlaced(true)
+    end)
+
+    local closeBtn = CreateFrame("Button", nil, titleBar)
+    closeBtn:SetWidth(22)
+    closeBtn:SetHeight(22)
+    closeBtn:SetPoint("RIGHT", titleBar, "RIGHT", -6, 0)
+    local closeText = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    closeText:SetPoint("CENTER", closeBtn, "CENTER", 0, 0)
+    closeText:SetText("|cffaaaaaaX|r")
+    closeBtn:SetScript("OnClick", function() panel:Hide() end)
+
+    -- zone scrollable
+    local scroll = CreateFrame("ScrollFrame", PANEL_NAME .. "Scroll", panel)
+    scroll:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -34)
+    scroll:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", 0, 6)
+    local content = CreateFrame("Frame", PANEL_NAME .. "Content", scroll)
+    content:SetWidth(WIDTH)
+    content:SetHeight(1)
+    scroll:SetScrollChild(content)
+
+    panel:SetScript("OnMouseWheel", function(self, delta)
+        delta = delta or _G.arg1 or 0
+        local cur = scroll:GetVerticalScroll() or 0
+        local maxScroll = (content:GetHeight() or 0) - (HEIGHT - 40)
+        if maxScroll < 0 then maxScroll = 0 end
+        local target = cur - delta * 40
+        if target < 0 then target = 0 end
+        if target > maxScroll then target = maxScroll end
+        scroll:SetVerticalScroll(target)
+    end)
+
+    local refreshers = {}
+    local yOffset = -6
+
+    local function AddTooltip(widget, label, tooltip)
+        widget:SetScript("OnEnter", function()
+            if not tooltip then return end
+            GameTooltip:SetOwner(widget, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(label, 0.9, 0.75, 1)
+            GameTooltip:AddLine(tooltip, 1, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        widget:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
+
+    local function NewCard(height)
+        local card = CreateFrame("Frame", nil, content)
+        card:SetPoint("TOPLEFT", content, "TOPLEFT", PAD, yOffset)
+        card:SetWidth(WIDTH - PAD * 2)
+        card:SetHeight(height)
+        local cbg = card:CreateTexture(nil, "BACKGROUND")
+        cbg:SetAllPoints(card)
+        cbg:SetTexture(C.card[1], C.card[2], C.card[3], C.card[4])
+        yOffset = yOffset - height - 8
+        return card
+    end
+
+    local ROW = 24
+
+    for s = 1, #GGL_PANEL_SECTIONS do
+        local section = GGL_PANEL_SECTIONS[s]
+
+        -- header de section
+        local header = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        header:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + 2, yOffset - 2)
+        header:SetText(GGL_ColorHex .. section.title .. "|r")
+        yOffset = yOffset - 18
+
+        -- hauteur de la carte
+        local h = 8
+        for it = 1, #section.items do
+            local e = section.items[it]
+            h = h + ((e.type == "slider") and (ROW + 6) or ROW)
+        end
+        local card = NewCard(h)
+
+        local rowY = -6
+        for it = 1, #section.items do
+            local e = section.items[it]
+
+            if e.type == "check" then
+                local box = CreateFrame("Button", nil, card)
+                box:SetWidth(16)
+                box:SetHeight(16)
+                box:SetPoint("TOPLEFT", card, "TOPLEFT", 8, rowY - 3)
+                local fill = box:CreateTexture(nil, "ARTWORK")
+                fill:SetAllPoints(box)
+                local check = box:CreateTexture(nil, "OVERLAY")
+                check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+                check:SetPoint("CENTER", box, "CENTER", 0, 0)
+                check:SetWidth(20)
+                check:SetHeight(20)
+
+                local label = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                label:SetPoint("LEFT", box, "RIGHT", 8, 0)
+                label:SetText(e.label)
+
+                local function Refresh()
+                    if DBGet(e.key, e.default) then
+                        fill:SetTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                        check:Show()
+                        label:SetTextColor(C.text[1], C.text[2], C.text[3])
+                    else
+                        fill:SetTexture(C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
+                        check:Hide()
+                        label:SetTextColor(C.textDim[1], C.textDim[2], C.textDim[3])
+                    end
+                end
+                box:SetScript("OnClick", function()
+                    DBSet(e.key, not DBGet(e.key, e.default))
+                    Refresh()
+                end)
+                AddTooltip(box, e.label, e.tooltip)
+                refreshers[#refreshers + 1] = Refresh
+                Refresh()
+                rowY = rowY - ROW
+
+            elseif e.type == "cycle" then
+                local label = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                label:SetPoint("TOPLEFT", card, "TOPLEFT", 8, rowY - 6)
+                label:SetText(e.label)
+
+                local chips = {}
+                local cx = 150
+                for ci = 1, #e.options do
+                    local opt = e.options[ci]
+                    local chip = CreateFrame("Button", nil, card)
+                    chip:SetWidth(opt.width or 52)
+                    chip:SetHeight(17)
+                    chip:SetPoint("TOPLEFT", card, "TOPLEFT", cx, rowY - 3)
+                    cx = cx + (opt.width or 52) + 4
+                    local cfill = chip:CreateTexture(nil, "ARTWORK")
+                    cfill:SetAllPoints(chip)
+                    local ctext = chip:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                    ctext:SetPoint("CENTER", chip, "CENTER", 0, 0)
+                    ctext:SetText(opt.text)
+                    chip.fill = cfill
+                    chip.value = opt.value
+                    chip.text = ctext
+                    chips[ci] = chip
+                    chip:SetScript("OnClick", function()
+                        DBSet(e.key, opt.value)
+                        for cj = 1, #chips do
+                            local other = chips[cj]
+                            if other.value == opt.value then
+                                other.fill:SetTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                            else
+                                other.fill:SetTexture(C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
+                            end
+                        end
+                    end)
+                    AddTooltip(chip, e.label, e.tooltip)
+                end
+                local function Refresh()
+                    local current = DBGet(e.key, e.default)
+                    for cj = 1, #chips do
+                        local chip = chips[cj]
+                        if chip.value == current then
+                            chip.fill:SetTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                        else
+                            chip.fill:SetTexture(C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
+                        end
+                    end
+                end
+                refreshers[#refreshers + 1] = Refresh
+                Refresh()
+                rowY = rowY - ROW
+
+            elseif e.type == "slider" then
+                local label = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                label:SetPoint("TOPLEFT", card, "TOPLEFT", 8, rowY - 6)
+                label:SetText(e.label)
+
+                local valueText = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                valueText:SetPoint("TOPRIGHT", card, "TOPRIGHT", -10, rowY - 6)
+
+                local slider = CreateFrame("Slider", nil, card)
+                slider:SetOrientation("HORIZONTAL")
+                slider:SetPoint("TOPLEFT", card, "TOPLEFT", 150, rowY - 4)
+                slider:SetWidth(WIDTH - PAD * 2 - 150 - 56)
+                slider:SetHeight(16)
+                slider:SetMinMaxValues(e.min, e.max)
+                slider:SetValueStep(e.step or 1)
+                local track = slider:CreateTexture(nil, "BACKGROUND")
+                track:SetPoint("LEFT", slider, "LEFT", 0, 0)
+                track:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
+                track:SetHeight(4)
+                track:SetTexture(C.track[1], C.track[2], C.track[3], 1)
+                slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+                slider:EnableMouse(true)
+
+                local updating = false
+                local function Refresh()
+                    updating = true
+                    local v = DBGet(e.key, e.default)
+                    if type(v) ~= "number" then v = e.default end
+                    slider:SetValue(v)
+                    valueText:SetText(GGL_ColorHex .. v .. (e.suffix or "") .. "|r")
+                    updating = false
+                end
+                slider:SetScript("OnValueChanged", function(self, value)
+                    if updating then return end
+                    value = value or _G.arg1
+                    value = math.floor((value or e.default) + 0.5)
+                    DBSet(e.key, value)
+                    valueText:SetText(GGL_ColorHex .. value .. (e.suffix or "") .. "|r")
+                end)
+                AddTooltip(slider, e.label, e.tooltip)
+                refreshers[#refreshers + 1] = Refresh
+                Refresh()
+                rowY = rowY - ROW - 6
+            end
+        end
+    end
+
+    content:SetHeight(-yOffset + 12)
+
+    -- resync visuel (barre, /action et macros restent synchronises)
+    local elapsedSince = 0
+    panel:SetScript("OnUpdate", function(self, elapsed)
+        elapsedSince = elapsedSince + (elapsed or _G.arg1 or 0.02)
+        if elapsedSince < 0.4 then return end
+        elapsedSince = 0
+        for r = 1, #refreshers do
+            refreshers[r]()
+        end
+    end)
+
+    panel:Hide()
+
+    _G.SLASH_GGLUI1 = "/gglui"
+    _G.SlashCmdList["GGLUI"] = function()
+        if panel:IsShown() then panel:Hide() else panel:Show() end
+    end
+end
