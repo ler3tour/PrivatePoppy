@@ -509,6 +509,8 @@ local GGL_ColorHex = "|cffb16bff"
 local GGL_PANEL_TITLE = "GGL — HUNTER BM"
 local GGL_PANEL_SECTIONS = {
     { title = "SHOT WEAVING (Auto Shot sacre)", items = {
+        { type = "check", key = "UseSteadyShot", label = "Steady Shot (weaving)", default = true, tooltip = "Le filler du cycle 1:1" },
+        { type = "check", key = "UseKillCommand", label = "Kill Command (sur proc)", default = true, tooltip = "" },
         { type = "check", key = "UseArcaneShot", label = "Arcane Shot (tisse)", default = true, tooltip = "Top logs : 5-7.5 CPM" },
         { type = "check", key = "UseMultiShot", label = "Multi-Shot (tisse en mono)", default = true, tooltip = "Top logs : ~4 CPM" },
         { type = "check", key = "UseRaptorStrike", label = "Raptor Strike (melee weaving)", default = true, tooltip = "Boss a grosse hitbox uniquement" },
@@ -524,6 +526,7 @@ local GGL_PANEL_SECTIONS = {
         { type = "check", key = "UseSappers", label = "Super Sapper (boss)", default = true, tooltip = "Ingenierie requise" },
         { type = "check", key = "UseTrinket1", label = "Trinket 1 (slot haut)", default = true, tooltip = "" },
         { type = "check", key = "UseTrinket2", label = "Trinket 2 (slot bas)", default = true, tooltip = "" },
+        { type = "check", key = "UseRacials", label = "Racials (Berserking/Blood Fury)", default = true, tooltip = "" },
     } },
     { title = "FAMILIER & MANA", items = {
         { type = "check", key = "AutoPetAttack", label = "Pet attack auto", default = true, tooltip = "35-40% du DPS BM" },

@@ -193,7 +193,7 @@ A[3] = function(icon)
 
     -- KillCommand : HORS GCD, a chaque proc (crit du chasseur), ne
     -- clippe rien — priorite absolue
-    if PetIsAlive() and A.KillCommand:IsReadyByPassCastGCD(isTarget, true) then
+    if ToggleOr("UseKillCommand", true) and PetIsAlive() and A.KillCommand:IsReadyByPassCastGCD(isTarget, true) then
         return A.KillCommand:Show(icon)
     end
 
@@ -207,11 +207,11 @@ A[3] = function(icon)
             return A.RapidFire:Show(icon)
         end
 
-        if A.Berserking:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.Berserking:AutoRacial(isTarget) then
             return A.Berserking:Show(icon)
         end
 
-        if A.BloodFury:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.BloodFury:AutoRacial(isTarget) then
             return A.BloodFury:Show(icon)
         end
 
@@ -269,7 +269,7 @@ A[3] = function(icon)
 
     -- SteadyShot : LE filler — seulement si son cast tient avant le
     -- prochain Auto Shot (jamais de clipping)
-    if A.SteadyShot:IsReady(isTarget) and A.SteadyShot:AbsentImun(isTarget, Temp.AttackTypes) and FitsBeforeAutoShot(A.SteadyShot) then
+    if ToggleOr("UseSteadyShot", true) and A.SteadyShot:IsReady(isTarget) and A.SteadyShot:AbsentImun(isTarget, Temp.AttackTypes) and FitsBeforeAutoShot(A.SteadyShot) then
         return A.SteadyShot:Show(icon)
     end
 

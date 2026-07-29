@@ -551,6 +551,15 @@ local GGL_PANEL_TITLE = "GGL — WARRIOR PROT"
 local GGL_PANEL_SECTIONS = {
     { title = "ROTATION", items = {
         { type = "check", key = "ZerkerDPS", label = "Mode Zerker DPS (top logs)", default = false, tooltip = "Berserker Stance quand vous ne tankez pas" },
+        { type = "check", key = "UseShieldSlam", label = "Shield Slam (on cooldown)", default = true, tooltip = "" },
+        { type = "check", key = "UseRevenge", label = "Revenge (sur proc)", default = true, tooltip = "" },
+        { type = "check", key = "UseDevastate", label = "Devastate / Sunder (filler)", default = true, tooltip = "" },
+        { type = "check", key = "UseHeroicStrike", label = "Heroic Strike (vidange)", default = true, tooltip = "" },
+        { type = "check", key = "UseCleave", label = "Cleave (mode AoE)", default = true, tooltip = "" },
+        { type = "check", key = "UseWhirlwind", label = "Zerker : Whirlwind", default = true, tooltip = "" },
+        { type = "check", key = "UseBerserkerRage", label = "Zerker : Berserker Rage", default = true, tooltip = "" },
+        { type = "check", key = "UseRecklessness", label = "Zerker : Recklessness (burst)", default = true, tooltip = "" },
+        { type = "check", key = "UseIntercept", label = "Zerker : Intercept", default = true, tooltip = "" },
         { type = "check", key = "ShieldBlock", label = "Shield Block on cooldown", default = true, tooltip = "Anti-crush + procs Revenge" },
         { type = "check", key = "MaintainThunderClap", label = "Thunder Clap (maintien)", default = true, tooltip = "OFF si un autre guerrier l'applique" },
         { type = "check", key = "MaintainDemoShout", label = "Demoralizing Shout (maintien)", default = false, tooltip = "Coute un GCD" },
@@ -565,6 +574,8 @@ local GGL_PANEL_SECTIONS = {
         { type = "check", key = "SuperSapperCharge", label = "Super Sapper (AoE 3+)", default = false, tooltip = "Ingenierie requise" },
         { type = "check", key = "MightyRagePotion", label = "Mighty Rage Potion", default = false, tooltip = "Si rage < 25 en burst" },
         { type = "check", key = "BerserkerRage-Dance", label = "Berserker Rage dance (rage)", default = false, tooltip = "Risque en tanking actif" },
+        { type = "check", key = "UseBloodrage", label = "Bloodrage (on cooldown)", default = true, tooltip = "" },
+        { type = "check", key = "UseRacials", label = "Racials (Berserking/Blood Fury)", default = true, tooltip = "" },
     } },
     { title = "REGLAGES", items = {
         { type = "cycle", key = "ShoutToUse", label = "Cri utilise", default = "CommandingShout", options = { { text = "Command.", value = "CommandingShout", width = 64 }, { text = "Battle", value = "BattleShout", width = 48 }, { text = "OFF", value = "OFF", width = 36 } }, tooltip = "Commanding = PV max, Battle = AP" },

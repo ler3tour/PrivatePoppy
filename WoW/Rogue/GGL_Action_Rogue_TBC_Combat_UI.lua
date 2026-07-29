@@ -426,6 +426,7 @@ local GGL_ColorHex = "|cffb16bff"
 local GGL_PANEL_TITLE = "GGL — ROGUE COMBAT"
 local GGL_PANEL_SECTIONS = {
     { title = "CYCLE (SnD + Expose Armor)", items = {
+        { type = "check", key = "UseSnD", label = "Slice and Dice (upkeep)", default = true, tooltip = "LA stat du parse — a ne couper que pour du 100% manuel" },
         { type = "check", key = "UseExposeArmor", label = "Expose Armor (double uptime)", default = true, tooltip = "Le cycle des top logs" },
         { type = "check", key = "UseRupture", label = "Rupture 5 CP", default = true, tooltip = "Seulement quand SnD et EA sont larges" },
         { type = "check", key = "UseEviscerate", label = "Eviscerate 5 CP (dump)", default = true, tooltip = "" },
@@ -440,6 +441,7 @@ local GGL_PANEL_SECTIONS = {
         { type = "check", key = "UseSappers", label = "Sappers (boss)", default = true, tooltip = "Ingenierie requise" },
         { type = "check", key = "UseTrinket1", label = "Trinket 1 (slot haut)", default = true, tooltip = "" },
         { type = "check", key = "UseTrinket2", label = "Trinket 2 (slot bas)", default = true, tooltip = "" },
+        { type = "check", key = "UseRacials", label = "Racials (Berserking/Blood Fury)", default = true, tooltip = "" },
     } },
     { title = "DIVERS", items = {
         { type = "check", key = "Interrupt-Kick", label = "Kick (auto)", default = true, tooltip = "" },

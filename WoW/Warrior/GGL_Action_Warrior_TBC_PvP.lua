@@ -536,12 +536,12 @@ A[3] = function(icon)
 
     -- [[ NO COMBAT - PRE COMBAT ]]
     if not inCombat then
-        if myRage <= 80 and A.Bloodrage:IsReady("player") and Unit("player"):HealthPercent() >= ToggleOr("Bloodrage-LimitHP", 70) then
+        if ToggleOr("UseBloodrage", true) and myRage <= 80 and A.Bloodrage:IsReady("player") and Unit("player"):HealthPercent() >= ToggleOr("Bloodrage-LimitHP", 70) then
             return A.Bloodrage:Show(icon)
         end
 
         -- Charge (BattleStance requis)
-        if not forceDef and A.Charge:IsReady(isMouse or isTarget, nil, nil, nil, true) then
+        if not forceDef and ToggleOr("UseCharge", true) and A.Charge:IsReady(isMouse or isTarget, nil, nil, nil, true) then
             if inStance ~= 1 and A.BattleStance:IsReady("player") then
                 return A.BattleStance:Show(icon)
             end
@@ -590,27 +590,27 @@ A[3] = function(icon)
     if inCombat and BurstIsON(isTarget) and A.AbsentImun(nil, isTarget, Temp.AttackTypes) then
         local timetouseall = (DetermineCountGCDs(A.BloodFury, A.Berserking, A.Recklessness, A.DeathWish) * (GetGCD() * 3)) + GetCurrentGCD() + GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (TMW.UPD_INTV or 0)
 
-        if A.Berserking:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.Berserking:AutoRacial(isTarget) then
             return A.Berserking:Show(icon)
         end
 
-        if A.BloodFury:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.BloodFury:AutoRacial(isTarget) then
             return A.BloodFury:Show(icon)
         end
 
-        if A.DeathWish:IsReady("player") and myRage >= A.DeathWish:GetSpellPowerCostCache() + 30 then
+        if ToggleOr("UseDeathWish", true) and A.DeathWish:IsReady("player") and myRage >= A.DeathWish:GetSpellPowerCostCache() + 30 then
             return A.DeathWish:Show(icon)
         end
 
-        if inStance == 3 and A.Recklessness:IsReady("player") and (A.DeathWish:GetCooldown() > 30 or Unit("player"):HasBuffs(A.DeathWish.ID) > 0 or A.DeathWish:GetTalentRank() == 0) then
+        if ToggleOr("UseRecklessness", true) and inStance == 3 and A.Recklessness:IsReady("player") and (A.DeathWish:GetCooldown() > 30 or Unit("player"):HasBuffs(A.DeathWish.ID) > 0 or A.DeathWish:GetTalentRank() == 0) then
             return A.Recklessness:Show(icon)
         end
 
-        if A.Trinket1:IsReady(isTarget) and A.Trinket1:IsItemDamager() then
+        if ToggleOr("UseTrinket1", true) and A.Trinket1:IsReady(isTarget) and A.Trinket1:IsItemDamager() then
             return A.Trinket1:Show(icon)
         end
 
-        if A.Trinket2:IsReady(isTarget) and A.Trinket2:IsItemDamager() then
+        if ToggleOr("UseTrinket2", true) and A.Trinket2:IsReady(isTarget) and A.Trinket2:IsItemDamager() then
             return A.Trinket2:Show(icon)
         end
 
@@ -621,7 +621,7 @@ A[3] = function(icon)
     end
 
     -- Bloodrage : rage quasi gratuite
-    if inCombat and myRage < (80 - HeroicStrikeAdjustedPower()) and A.Bloodrage:IsReady("player") and Unit("player"):HealthPercent() >= ToggleOr("Bloodrage-LimitHP", 70) then
+    if ToggleOr("UseBloodrage", true) and inCombat and myRage < (80 - HeroicStrikeAdjustedPower()) and A.Bloodrage:IsReady("player") and Unit("player"):HealthPercent() >= ToggleOr("Bloodrage-LimitHP", 70) then
         return A.Bloodrage:Show(icon)
     end
 
@@ -646,12 +646,12 @@ A[3] = function(icon)
     end
 
     -- MortalStrike : coeur du build Arms (debuff soins -50% a maintenir)
-    if A.MortalStrike:IsReady(isTarget) and A.MortalStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.MortalStrike:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() then
+    if ToggleOr("UseMortalStrike", true) and A.MortalStrike:IsReady(isTarget) and A.MortalStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.MortalStrike:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() then
         return A.MortalStrike:Show(icon)
     end
 
     -- Execute : sous 20 %, prioritaire sur Whirlwind (toute la rage y passe)
-    if executePhase and A.Execute:IsReady(isTarget) and A.Execute:AbsentImun(isTarget, Temp.AttackTypes) then
+    if ToggleOr("UseExecute", true) and executePhase and A.Execute:IsReady(isTarget) and A.Execute:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.Execute:Show(icon)
     end
 
@@ -673,7 +673,7 @@ A[3] = function(icon)
 
     -- Whirlwind : Berserker Stance, en reservant la rage d'un MortalStrike
     -- imminent, jamais si un CC cassable (sheep/sap) est a portee
-    if not executePhase and inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and (not A.IsInPvP or not EnemyTeam():IsBreakAble(8)) then
+    if ToggleOr("UseWhirlwind", true) and not executePhase and inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() + ((A.MortalStrike:GetCooldown() <= GetGCD() and not A.MortalStrike:IsBlockedBySpellBook()) and A.MortalStrike:GetSpellPowerCostCache() or 0) and (not A.IsInPvP or not EnemyTeam():IsBreakAble(8)) then
         return A.Whirlwind:Show(icon)
     end
 
@@ -700,12 +700,12 @@ A[3] = function(icon)
     end
 
     -- Cleave : rage dump AoE (jamais si CC cassable autour)
-    if inAoE and not IsCurrentAttack() and MultiUnits:GetBySpell(A.Hamstring, 7) >= 2 and A.Cleave:IsReady(isTarget, true) and A.Cleave:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("Cleave-PWR", 50) and (not A.IsInPvP or not EnemyTeam():IsBreakAble(5)) then
+    if ToggleOr("UseCleave", true) and inAoE and not IsCurrentAttack() and MultiUnits:GetBySpell(A.Hamstring, 7) >= 2 and A.Cleave:IsReady(isTarget, true) and A.Cleave:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("Cleave-PWR", 50) and (not A.IsInPvP or not EnemyTeam():IsBreakAble(5)) then
         return A.Cleave:Show(icon)
     end
 
     -- HeroicStrike : rage dump
-    if not executePhase and not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("HeroicStrike-PWR", 60) then
+    if ToggleOr("UseHeroicStrike", true) and not executePhase and not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("HeroicStrike-PWR", 60) then
         return A.HeroicStrike:Show(icon)
     end
 

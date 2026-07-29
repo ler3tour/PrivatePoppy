@@ -178,11 +178,11 @@ A[3] = function(icon)
             return A.AdrenalineRush:Show(icon)
         end
 
-        if A.Berserking:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.Berserking:AutoRacial(isTarget) then
             return A.Berserking:Show(icon)
         end
 
-        if A.BloodFury:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.BloodFury:AutoRacial(isTarget) then
             return A.BloodFury:Show(icon)
         end
 
@@ -224,7 +224,7 @@ A[3] = function(icon)
 
     -- SliceandDice : LA priorite absolue — refresh des que <= 1 GCD
     -- restant, avec n'importe quel nombre de CP
-    if comboPoints >= 1 and buffSnD <= GetGCD() + GetCurrentGCD() and energy >= sndCost and A.SliceandDice:IsReady(isTarget, true) then
+    if ToggleOr("UseSnD", true) and comboPoints >= 1 and buffSnD <= GetGCD() + GetCurrentGCD() and energy >= sndCost and A.SliceandDice:IsReady(isTarget, true) then
         return A.SliceandDice:Show(icon)
     end
 

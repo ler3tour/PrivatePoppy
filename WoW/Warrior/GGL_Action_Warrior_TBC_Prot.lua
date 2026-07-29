@@ -246,19 +246,19 @@ A[3] = function(icon)
     if zerkerDPS and inStance == 3 then
         -- BerserkerRage on cooldown (rage gratuite + immunite fear,
         -- ~21% d'uptime sur les top logs)
-        if A.BerserkerRage:IsReady("player") and myRage <= 60 then
+        if ToggleOr("UseBerserkerRage", true) and A.BerserkerRage:IsReady("player") and myRage <= 60 then
             return A.BerserkerRage:Show(icon)
         end
 
         -- Intercept : gap-closer si la cible sort de melee
-        if inCombat and not isTargetInMelee and A.Intercept:IsReady(isTarget, nil, nil, nil, true) and myRage >= A.Intercept:GetSpellPowerCostCache() and A.Intercept:AbsentImun(isTarget, Temp.AttackTypes) then
+        if ToggleOr("UseIntercept", true) and inCombat and not isTargetInMelee and A.Intercept:IsReady(isTarget, nil, nil, nil, true) and myRage >= A.Intercept:GetSpellPowerCostCache() and A.Intercept:AbsentImun(isTarget, Temp.AttackTypes) then
             return A.Intercept:Show(icon)
         end
     end
 
     -- Bloodrage : on cooldown (la rage d'un tank ne doit jamais plafonner
     -- ni manquer), garde de PV reglable
-    if myRage < (80 - HeroicStrikeAdjustedPower()) and A.Bloodrage:IsReady("player") and Unit("player"):HealthPercent() >= ToggleOr("Bloodrage-LimitHP", 35) then
+    if ToggleOr("UseBloodrage", true) and myRage < (80 - HeroicStrikeAdjustedPower()) and A.Bloodrage:IsReady("player") and Unit("player"):HealthPercent() >= ToggleOr("Bloodrage-LimitHP", 35) then
         return A.Bloodrage:Show(icon)
     end
 
@@ -298,16 +298,16 @@ A[3] = function(icon)
 
     -- [[ BURST ]] : racials + trinkets DPS (toggle Burst du core)
     if inCombat and BurstIsON(isTarget) and A.AbsentImun(nil, isTarget, Temp.AttackTypes) then
-        if A.Berserking:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.Berserking:AutoRacial(isTarget) then
             return A.Berserking:Show(icon)
         end
 
-        if A.BloodFury:AutoRacial(isTarget) then
+        if ToggleOr("UseRacials", true) and A.BloodFury:AutoRacial(isTarget) then
             return A.BloodFury:Show(icon)
         end
 
         -- Recklessness : mode ZerkerDPS uniquement (vu sur les top logs)
-        if zerkerDPS and inStance == 3 and A.Recklessness:IsReady("player") then
+        if ToggleOr("UseRecklessness", true) and zerkerDPS and inStance == 3 and A.Recklessness:IsReady("player") then
             return A.Recklessness:Show(icon)
         end
 
@@ -357,19 +357,19 @@ A[3] = function(icon)
     end
 
     -- ShieldSlam : ON COOLDOWN, priorite absolue (plus gros hit du kit)
-    if A.ShieldSlam:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.ShieldSlam:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.ShieldSlam:AbsentImun(isTarget, Temp.AttackTypes) then
+    if ToggleOr("UseShieldSlam", true) and A.ShieldSlam:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.ShieldSlam:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.ShieldSlam:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.ShieldSlam:Show(icon)
     end
 
     -- Revenge : sur proc (dodge/parry/block subi), quasi gratuit
     -- (la posture requise est geree par IsReady — actif en mode tank)
-    if A.Revenge:IsReady(isTarget) and myRage >= A.Revenge:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Revenge:AbsentImun(isTarget, Temp.AttackTypes) then
+    if ToggleOr("UseRevenge", true) and A.Revenge:IsReady(isTarget) and myRage >= A.Revenge:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Revenge:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.Revenge:Show(icon)
     end
 
     -- Whirlwind : on cooldown en Berserker Stance (top logs : ~2.9 CPM),
     -- en reservant la rage du Heroic Strike en file
-    if inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) then
+    if ToggleOr("UseWhirlwind", true) and inStance == 3 and A.Whirlwind:IsReady(isTarget, true) and myRage >= A.Whirlwind:GetSpellPowerCostCache() + HeroicStrikeAdjustedPower() and A.Whirlwind:AbsentImun(isTarget, Temp.AttackTypes) then
         return A.Whirlwind:Show(icon)
     end
 
@@ -378,23 +378,23 @@ A[3] = function(icon)
     -- permet (la posture requise est geree par IsReady).
     -- Fallback SunderArmor si Devastate n'est pas talente
     if not A.Devastate:IsBlockedBySpellBook() and A.Devastate:GetTalentRank() > 0 then
-        if A.Devastate:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.Devastate:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and A.Devastate:AbsentImun(isTarget, Temp.AttackTypes) then
+        if ToggleOr("UseDevastate", true) and A.Devastate:IsReady(isTarget) and Player:HasShield(true) and myRage >= A.Devastate:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and A.Devastate:AbsentImun(isTarget, Temp.AttackTypes) then
             return A.Devastate:Show(icon)
         end
     else
-        if A.SunderArmor:IsReady(isTarget) and myRage >= A.SunderArmor:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffsStacks(Temp.AuraSunderArmor, true) < 5 and A.SunderArmor:AbsentImun(isTarget, Temp.AttackTypes) then
+        if ToggleOr("UseDevastate", true) and A.SunderArmor:IsReady(isTarget) and myRage >= A.SunderArmor:GetSpellPowerCostCache() + ShieldSlamReserve() + HeroicStrikeAdjustedPower() and Unit(isTarget):HasDeBuffsStacks(Temp.AuraSunderArmor, true) < 5 and A.SunderArmor:AbsentImun(isTarget, Temp.AttackTypes) then
             return A.SunderArmor:Show(icon)
         end
     end
 
     -- Cleave : vidange de rage AoE (hors GCD)
-    if inAoE and not IsCurrentAttack() and MultiUnits:GetBySpell(A.ShieldSlam, 7) >= 2 and A.Cleave:IsReady(isTarget, true) and A.Cleave:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("Cleave-PWR", 50) then
+    if ToggleOr("UseCleave", true) and inAoE and not IsCurrentAttack() and MultiUnits:GetBySpell(A.ShieldSlam, 7) >= 2 and A.Cleave:IsReady(isTarget, true) and A.Cleave:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("Cleave-PWR", 50) then
         return A.Cleave:Show(icon)
     end
 
     -- HeroicStrike : vidange de rage mono (hors GCD) — le seuil garantit
     -- que Shield Slam et Shield Block ne seront jamais affames
-    if not inAoE and not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("HeroicStrike-PWR", 40) then
+    if ToggleOr("UseHeroicStrike", true) and not inAoE and not IsCurrentAttack() and A.HeroicStrike:IsReady(isTarget) and A.HeroicStrike:AbsentImun(isTarget, Temp.AttackTypes) and myRage >= ToggleOr("HeroicStrike-PWR", 40) then
         return A.HeroicStrike:Show(icon)
     end
 end
