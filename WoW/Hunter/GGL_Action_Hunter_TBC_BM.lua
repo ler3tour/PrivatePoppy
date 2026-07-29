@@ -28,6 +28,9 @@ local GetCurrentGCD                                  = Action.GetCurrentGCD
 local GetPing                                        = Action.GetPing
 local BurstIsON                                      = Action.BurstIsON
 local IsUnitEnemy                                    = Action.IsUnitEnemy
+local DetermineUsableObject                          = Action.DetermineUsableObject
+local UnitIsUnit                                     = _G.UnitIsUnit
+local PetAttack                                      = _G.PetAttack
 local Unit                                           = Action.Unit
 local Player                                         = Action.Player
 local MultiUnits                                     = Action.MultiUnits
@@ -100,13 +103,14 @@ local function GetRangedSwing()
 end
 
 -- Le cast tient-il avant le prochain auto ? (LA regle du weaving)
+-- Le buffer est reglable dans l'UI (latence/serveur)
 local function FitsBeforeAutoShot(castObject)
     local swing = GetRangedSwing()
     if swing <= 0 then
         return true -- timer indisponible : on ne bloque pas la rotation
     end
     local castTime = castObject:GetSpellCastTime() or 0
-    return swing > castTime + GetPing() + 0.1
+    return swing > castTime + GetPing() + (ToggleOr("WeaveBuffer", 100) / 1000)
 end
 
 local function PetIsAlive()
@@ -143,8 +147,9 @@ A[3] = function(icon)
         end
     end
 
-    -- Faucon : maintien hors combat
-    if not inCombat and Unit("player"):HasBuffs(Temp.AuraAspectHawk, true) == 0 and Unit("player"):HasBuffs(Temp.AuraAspectViper, true) == 0 and A.AspectoftheHawk:IsReady("player") then
+    -- Faucon : maintien permanent (en et hors combat — un aspect absent
+    -- coute bien plus qu'un GCD)
+    if Unit("player"):HasBuffs(Temp.AuraAspectHawk, true) == 0 and Unit("player"):HasBuffs(Temp.AuraAspectViper, true) == 0 and A.AspectoftheHawk:IsReady("player") then
         return A.AspectoftheHawk:Show(icon)
     end
 
@@ -154,6 +159,24 @@ A[3] = function(icon)
             return A:Show(icon, ACTION_CONST_AUTOTARGET)
         end
         return -- nil
+    end
+
+    -- Pet : envoyer le familier sur la cible (35-40 % du DPS BM !) —
+    -- effet de bord sans GCD, re-envoie aussi apres un switch de cible
+    if ToggleOr("AutoPetAttack", true) and inCombat and PetIsAlive() and PetAttack then
+        local okPT, onTarget = pcall(UnitIsUnit, "pettarget", isTarget)
+        if not okPT or not onTarget then
+            pcall(PetAttack)
+        end
+    end
+
+    -- AutoShot : s'assurer que le tir auto tourne (moteur GGL, comme le
+    -- profil Warrior d'origine pour les arcs) — pcall par securite
+    if inCombat and DetermineUsableObject then
+        local okAS, autoShoot = pcall(DetermineUsableObject, isTarget, nil, nil, true, nil, A.AutoShot)
+        if okAS and autoShoot then
+            return A:Show(icon, ACTION_CONST_AUTOSHOOT)
+        end
     end
 
     -- MendPet : OFF par defaut (canalisation 5 s = grosse perte DPS)
