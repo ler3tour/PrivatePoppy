@@ -857,6 +857,7 @@ do
     panel:Hide()
 
     _G.SLASH_GGLUI1 = "/gglui"
+    _G.SLASH_GGLUI2 = "/ggaa"
     _G.SlashCmdList["GGLUI"] = function()
         if panel:IsShown() then panel:Hide() else panel:Show() end
     end
