@@ -9,8 +9,8 @@
 --      AVANT le prochain auto (garde sur le swing timer ranged)
 --   2. Kill Command a chaque proc (hors GCD, ne clippe rien)
 --   3. Bestial Wrath + Rapid Fire + trinkets + Haste Potion groupes
---   4. Serpent Sting / Arcane / Multi-Shot en toggles (OFF par defaut :
---      a haut gear ils clippent les autos et font PERDRE du DPS)
+--   4. Arcane + Multi-Shot tisses (ON, releve top logs), Raptor Strike
+--      en melee weaving sur les gros hitbox, Serpent OFF (1 cast max)
 --   5. Aspect du Faucon maintenu, bascule Vipere auto a mana basse
 --
 -- Pre-pull manuel : Hunter's Mark, Misdirection, pet envoye.
@@ -63,8 +63,10 @@ Action[Action.PlayerClass] = {
     MendPet                   = Create({ Type = "Spell", ID = 136,   useMaxRank = true                         }),
     Misdirection              = Create({ Type = "Spell", ID = 34477                                            }), -- TBC only
     FeignDeath                = Create({ Type = "Spell", ID = 5384                                             }),
+    RaptorStrike              = Create({ Type = "Spell", ID = 2973,  useMaxRank = true                         }),
     -- Consumables
     HastePotion               = Create({ Type = "Potion", ID = 22838                                           }),
+    FlameCap                  = Create({ Type = "Item",   ID = 22788                                           }),
     SuperSapperCharge         = Create({ Type = "Item",   ID = 23827                                           }),
     -- Hidden (talents trackes)
     SerpentsSwiftness         = Create({ Type = "Spell", ID = 34466, Hidden = true, isTalent = true, useMaxRank = true }),
@@ -224,24 +226,44 @@ A[3] = function(icon)
         if ToggleOr("HastePotion", true) and Unit(isTarget):IsBoss() and A.HastePotion:IsReady("player") and (Unit("player"):HasBuffs(A.RapidFire.ID, true) > 0 or A.RapidFire:GetCooldown() > 120) then
             return A.HastePotion:Show(icon)
         end
+
+        -- FlameCap : releve top logs (~71 % d'uptime), CD propre
+        if ToggleOr("FlameCap", true) and Unit(isTarget):IsBoss() and A.FlameCap:IsReady("player") then
+            return A.FlameCap:Show(icon)
+        end
+
+        -- Sappers : releve top logs, meme en mono-cible
+        if ToggleOr("UseSappers", true) and Unit(isTarget):IsBoss() and A.SuperSapperCharge:IsReady("player") then
+            return A.SuperSapperCharge:Show(icon)
+        end
     end
 
     ----------------------------------------------------------------------
     -- [[ SHOT WEAVING ]] — l'Auto Shot est sacre
     ----------------------------------------------------------------------
 
-    -- SerpentSting : toggle OFF par defaut (clippe le 1:1 a haut gear)
+    -- RaptorStrike : MELEE WEAVING (top logs : 9-33 casts par combat !)
+    -- Sur les boss a grosse hitbox, se placer au chevauchement melee/
+    -- distance permet de tisser des Raptor Strike gratuits (on-next-
+    -- swing, ne touche pas au cycle ranged). Ne se declenche QUE si
+    -- vous etes a portee melee — c'est votre placement qui decide
+    if ToggleOr("UseRaptorStrike", true) and A.RaptorStrike:IsReady(isTarget) and not A.RaptorStrike:IsSpellCurrent() and A.RaptorStrike:AbsentImun(isTarget, Temp.AttackTypes) then
+        return A.RaptorStrike:Show(icon)
+    end
+
+    -- SerpentSting : toggle OFF par defaut (les top logs le posent 1x
+    -- max en debut de combat, 0.3 % des degats — negligeable)
     if ToggleOr("UseSerpentSting", false) and Unit(isTarget):HasDeBuffs(Temp.AuraSerpentSting, true) == 0 and Unit(isTarget):TimeToDie() > 15 and A.SerpentSting:IsReady(isTarget) and A.SerpentSting:AbsentImun(isTarget, Temp.AttackTypes) and FitsBeforeAutoShot(A.SerpentSting) then
         return A.SerpentSting:Show(icon)
     end
 
     -- MultiShot : mode AoE (3+) ou toggle single (clippe le 1:1)
-    if (inAoE and MultiUnits:GetByRange(10, 3) >= 3 or ToggleOr("UseMultiShot", false)) and A.MultiShot:IsReadyByPassCastGCD(isTarget, nil, nil, true) and A.MultiShot:AbsentImun(isTarget, Temp.AttackTypes) and FitsBeforeAutoShot(A.MultiShot) then
+    if (inAoE and MultiUnits:GetByRange(10, 3) >= 3 or ToggleOr("UseMultiShot", true)) and A.MultiShot:IsReadyByPassCastGCD(isTarget, nil, nil, true) and A.MultiShot:AbsentImun(isTarget, Temp.AttackTypes) and FitsBeforeAutoShot(A.MultiShot) then
         return A.MultiShot:Show(icon)
     end
 
     -- ArcaneShot : toggle OFF par defaut (clippe le 1:1)
-    if ToggleOr("UseArcaneShot", false) and A.ArcaneShot:IsReadyByPassCastGCD(isTarget, nil, nil, true) and A.ArcaneShot:AbsentImun(isTarget, Temp.AttackTypes) and FitsBeforeAutoShot(A.ArcaneShot) then
+    if ToggleOr("UseArcaneShot", true) and A.ArcaneShot:IsReadyByPassCastGCD(isTarget, nil, nil, true) and A.ArcaneShot:AbsentImun(isTarget, Temp.AttackTypes) and FitsBeforeAutoShot(A.ArcaneShot) then
         return A.ArcaneShot:Show(icon)
     end
 
