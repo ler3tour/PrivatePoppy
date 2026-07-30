@@ -561,16 +561,17 @@ do
     local loadError
     local function TogglePanel()
         local p = _G["StormPanel" .. (_G.Action.PlayerClass or "X")]
-        if p then
+        if p and not p.stormReady then
+            p:Hide()
+            _G.DEFAULT_CHAT_FRAME:AddMessage("|cffff3333Storm :|r construction du panneau incomplete — erreur : " .. (loadError or "inconnue"))
+        elseif p then
             if p:IsShown() then
                 p:Hide()
             else
                 p:ClearAllPoints()
                 p:SetPoint("CENTER", _G.UIParent, "CENTER", 0, 0)
-                p:SetFrameStrata("FULLSCREEN_DIALOG")
                 p:SetAlpha(1)
                 p:Show()
-                p:Raise()
                 local vis = p:IsVisible() and "oui" or "NON (parent cache ?)"
                 _G.DEFAULT_CHAT_FRAME:AddMessage("|cffe8c15cStorm :|r panneau ouvert au centre — visible : " .. vis .. ", taille " .. _G.math.floor(p:GetWidth() or 0) .. "x" .. _G.math.floor(p:GetHeight() or 0))
             end
@@ -648,6 +649,7 @@ do
     panel:SetFrameStrata("HIGH")
     panel:EnableMouse(true)
     panel:EnableMouseWheel(true)
+    panel:Hide() -- cache tant que la construction n'est pas terminee
 
     -- Marbre sombre tuile + bordure doree (textures du client : OPAQUE)
     -- fond opaque garanti, independant du backdrop
@@ -919,8 +921,6 @@ do
         end
     end)
 
-    panel:Hide()
-
     ----------------------------------------------------------------------
     -- Bouton minimap : clic = panneau, glisser = repositionner
     ----------------------------------------------------------------------
@@ -979,6 +979,8 @@ do
         end)
         mmBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     end
+
+    panel.stormReady = true
 
     end) -- pcall de construction
 
