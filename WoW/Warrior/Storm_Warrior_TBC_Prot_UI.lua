@@ -4,6 +4,17 @@
 --------------------------------------------------------------------------
 
 local A                            = _G.Action
+
+-- Texture pleine fiable sur client 2.4.3 : la forme SetTexture(r,g,b,a)
+-- rend transparent sur certains clients/unlockers, on teinte donc une
+-- texture blanche du client via SetVertexColor.
+local function StormSolidTex(tex, r, g, b, a)
+    if not tex:SetTexture("Interface\\Buttons\\WHITE8X8") then
+        tex:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
+    end
+    tex:SetVertexColor(r, g, b, a or 1)
+end
+
 local WR                           = A[A.PlayerClass]
 local L                            = {
     AOE                            = { enUS = "Use\nAoE",
@@ -422,8 +433,7 @@ do
 
         local bg = bar:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(bar)
-        bg:SetTexture(0, 0, 0, 0.45)
-
+        StormSolidTex(bg, 0, 0, 0, 0.45)
         bar.buttons = {}
 
         local function StartDrag()
@@ -604,7 +614,18 @@ do
     local function TogglePanel()
         local p = _G["StormPanel" .. (_G.Action.PlayerClass or "X")]
         if p then
-            if p:IsShown() then p:Hide() else p:Show() end
+            if p:IsShown() then
+                p:Hide()
+            else
+                p:ClearAllPoints()
+                p:SetPoint("CENTER", _G.UIParent, "CENTER", 0, 0)
+                p:SetFrameStrata("FULLSCREEN_DIALOG")
+                p:SetAlpha(1)
+                p:Show()
+                p:Raise()
+                local vis = p:IsVisible() and "oui" or "NON (parent cache ?)"
+                _G.DEFAULT_CHAT_FRAME:AddMessage("|cffe8c15cStorm :|r panneau ouvert au centre — visible : " .. vis .. ", taille " .. _G.math.floor(p:GetWidth() or 0) .. "x" .. _G.math.floor(p:GetHeight() or 0))
+            end
         else
             _G.DEFAULT_CHAT_FRAME:AddMessage("|cffff3333Storm :|r panneau non charge" .. (loadError and (" — " .. loadError) or " (profil [Storm] selectionne ?)"))
         end
@@ -681,6 +702,11 @@ do
     panel:EnableMouseWheel(true)
 
     -- Marbre sombre tuile + bordure doree (textures du client : OPAQUE)
+    -- fond opaque garanti, independant du backdrop
+    local baseBg = panel:CreateTexture(nil, "BACKGROUND")
+    baseBg:SetAllPoints(panel)
+    StormSolidTex(baseBg, 0.10, 0.075, 0.05, 0.98)
+
     panel:SetBackdrop({
         bgFile   = "Interface\\FrameGeneral\\UI-Background-Marble",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
@@ -694,8 +720,7 @@ do
     local shade = panel:CreateTexture(nil, "BORDER")
     shade:SetPoint("TOPLEFT", panel, "TOPLEFT", 7, -7)
     shade:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -7, 7)
-    shade:SetTexture(0, 0, 0, 0.55)
-
+    StormSolidTex(shade, 0, 0, 0, 0.55)
     -- barre de titre
     local titleBar = CreateFrame("Frame", nil, panel)
     titleBar:SetPoint("TOPLEFT", panel, "TOPLEFT", 7, -7)
@@ -709,12 +734,12 @@ do
     titleLine:SetPoint("BOTTOMLEFT", titleBar, "BOTTOMLEFT", 6, 0)
     titleLine:SetPoint("BOTTOMRIGHT", titleBar, "BOTTOMRIGHT", -6, 0)
     titleLine:SetHeight(1)
-    titleLine:SetTexture(C.gold[1], C.gold[2], C.gold[3], 0.7)
+    StormSolidTex(titleLine, C.gold[1], C.gold[2], C.gold[3], 0.7)
     titleBar:RegisterForDrag("LeftButton")
     titleBar:SetScript("OnDragStart", function() panel:StartMoving() end)
     titleBar:SetScript("OnDragStop", function()
         panel:StopMovingOrSizing()
-        panel:SetUserPlaced(true)
+        panel:SetUserPlaced(false)
     end)
 
     local closeBtn = CreateFrame("Button", nil, titleBar)
@@ -767,13 +792,13 @@ do
         card:SetHeight(height)
         local cbg = card:CreateTexture(nil, "BACKGROUND")
         cbg:SetAllPoints(card)
-        cbg:SetTexture(C.card[1], C.card[2], C.card[3], C.card[4])
+        StormSolidTex(cbg, C.card[1], C.card[2], C.card[3], C.card[4])
         -- filet dore a gauche (colonne romaine)
         local pillar = card:CreateTexture(nil, "BORDER")
         pillar:SetPoint("TOPLEFT", card, "TOPLEFT", 0, 0)
         pillar:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 0, 0)
         pillar:SetWidth(2)
-        pillar:SetTexture(C.gold[1], C.gold[2], C.gold[3], 0.55)
+        StormSolidTex(pillar, C.gold[1], C.gold[2], C.gold[3], 0.55)
         yOffset = yOffset - height - 10
         return card
     end
@@ -819,11 +844,11 @@ do
 
                 local function Refresh()
                     if DBGet(e.key, e.default) then
-                        fill:SetTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                        StormSolidTex(fill, C.accent[1], C.accent[2], C.accent[3], 1)
                         check:Show()
                         label:SetTextColor(C.text[1], C.text[2], C.text[3])
                     else
-                        fill:SetTexture(C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
+                        StormSolidTex(fill, C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
                         check:Hide()
                         label:SetTextColor(C.textDim[1], C.textDim[2], C.textDim[3])
                     end
@@ -864,9 +889,9 @@ do
                         for cj = 1, #chips do
                             local other = chips[cj]
                             if other.value == opt.value then
-                                other.fill:SetTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                                StormSolidTex(other.fill, C.accent[1], C.accent[2], C.accent[3], 1)
                             else
-                                other.fill:SetTexture(C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
+                                StormSolidTex(other.fill, C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
                             end
                         end
                     end)
@@ -877,9 +902,9 @@ do
                     for cj = 1, #chips do
                         local chip = chips[cj]
                         if chip.value == current then
-                            chip.fill:SetTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                            StormSolidTex(chip.fill, C.accent[1], C.accent[2], C.accent[3], 1)
                         else
-                            chip.fill:SetTexture(C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
+                            StormSolidTex(chip.fill, C.boxOff[1], C.boxOff[2], C.boxOff[3], 1)
                         end
                     end
                 end
@@ -906,7 +931,7 @@ do
                 track:SetPoint("LEFT", slider, "LEFT", 0, 0)
                 track:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
                 track:SetHeight(4)
-                track:SetTexture(C.track[1], C.track[2], C.track[3], C.track[4])
+                StormSolidTex(track, C.track[1], C.track[2], C.track[3], C.track[4])
                 slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
                 slider:EnableMouse(true)
 
@@ -996,7 +1021,7 @@ do
             UpdatePosition()
         end)
         mmBtn:SetScript("OnClick", function()
-            if panel:IsShown() then panel:Hide() else panel:Show() end
+            _G.SlashCmdList["STORMUI"]()
         end)
         mmBtn:SetScript("OnEnter", function()
             GameTooltip:SetOwner(mmBtn, "ANCHOR_LEFT")
