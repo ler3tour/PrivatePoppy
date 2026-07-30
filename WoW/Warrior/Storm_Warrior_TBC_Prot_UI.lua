@@ -598,6 +598,23 @@ local GGL_PANEL_SECTIONS = {
 -- Molette : scroll | Synchronise avec /action, la barre et les macros
 --------------------------------------------------------------------------
 do
+    -- Les commandes sont enregistrees EN PREMIER : meme si la construction
+    -- du panneau echoue, /storm et /ggaa repondent et affichent l'erreur
+    local loadError
+    local function TogglePanel()
+        local p = _G["StormPanel" .. (_G.Action.PlayerClass or "X")]
+        if p then
+            if p:IsShown() then p:Hide() else p:Show() end
+        else
+            _G.DEFAULT_CHAT_FRAME:AddMessage("|cffff3333Storm :|r panneau non charge" .. (loadError and (" — " .. loadError) or " (profil [Storm] selectionne ?)"))
+        end
+    end
+    _G.SLASH_STORMUI1 = "/storm"
+    _G.SLASH_STORMUI2 = "/ggaa"
+    _G.SlashCmdList["STORMUI"] = TogglePanel
+
+    local okLoad, errLoad = pcall(function()
+
     local TMW             = _G.TMW
     local CreateFrame     = _G.CreateFrame
     local UIParent        = _G.UIParent
@@ -990,9 +1007,12 @@ do
         mmBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     end
 
-    _G.SLASH_STORMUI1 = "/storm"
-    _G.SLASH_STORMUI2 = "/ggaa"
-    _G.SlashCmdList["STORMUI"] = function()
-        if panel:IsShown() then panel:Hide() else panel:Show() end
+    end) -- pcall de construction
+
+    if okLoad then
+        _G.DEFAULT_CHAT_FRAME:AddMessage("|cffe8c15cStorm|r UI chargee : /storm ou /ggaa, ou le bouton minimap.")
+    else
+        loadError = tostring(errLoad)
+        _G.DEFAULT_CHAT_FRAME:AddMessage("|cffff3333Storm UI erreur de chargement :|r " .. loadError)
     end
 end
