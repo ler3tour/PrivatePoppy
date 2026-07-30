@@ -505,7 +505,7 @@ end
 
 
 -- Configuration du panneau overlay
-local GGL_ColorHex = "|cffb16bff"
+local GGL_ColorHex = "|cffe8c15c"
 local GGL_PANEL_TITLE = "GGL — HUNTER BM"
 local GGL_PANEL_SECTIONS = {
     { title = "SHOT WEAVING (Auto Shot sacre)", items = {
@@ -540,32 +540,35 @@ local GGL_PANEL_SECTIONS = {
 }
 
 --------------------------------------------------------------------------
--- [[ OVERLAY "GGL ROTATIONS" ]] — panneau d'options style Magic Rotations
--- /gglui : afficher/masquer | glisser la barre de titre pour deplacer
--- Molette : scroll | Tout est synchronise avec /action et la barre
+-- [[ OVERLAY "GGL ROTATIONS" ]] v2 — design Rome antique
+-- Marbre sombre + bordures or (opaque, lisible), bouton minimap.
+-- /ggaa ou /gglui : afficher/masquer | glisser la barre de titre
+-- Molette : scroll | Synchronise avec /action, la barre et les macros
 --------------------------------------------------------------------------
 do
     local TMW             = _G.TMW
     local CreateFrame     = _G.CreateFrame
     local UIParent        = _G.UIParent
+    local Minimap         = _G.Minimap
     local GameTooltip     = _G.GameTooltip
     local GetToggle       = A.GetToggle
+    local math            = _G.math
 
     local PANEL_NAME      = "GGLPanel" .. (A.PlayerClass or "X")
     if _G[PANEL_NAME] then return end
 
-    -- Palette (style Magic Rotations)
+    -- Palette "Rome antique" : marbre sombre, or, bronze, ivoire
     local C = {
-        bg        = { 0.05, 0.05, 0.07, 0.96 },
-        card      = { 0.09, 0.09, 0.13, 0.95 },
-        title     = "|cffb16bff",
-        section   = { 0.69, 0.42, 1.00 },
-        accent    = { 0.55, 0.36, 0.96 },
-        accentHi  = { 0.66, 0.47, 1.00 },
-        boxOff    = { 0.16, 0.16, 0.22, 1 },
-        text      = { 0.92, 0.92, 0.95 },
-        textDim   = { 0.55, 0.55, 0.62 },
-        track     = { 0.20, 0.20, 0.28, 1 },
+        marble    = { 0.30, 0.24, 0.16, 1.0 },  -- teinte du marbre (opaque)
+        card      = { 0.07, 0.055, 0.035, 0.92 },
+        gold      = { 0.95, 0.78, 0.25 },
+        goldHex   = "|cffe8c15c",
+        accent    = { 0.93, 0.75, 0.22 },       -- remplissage ON
+        boxOff    = { 0.22, 0.17, 0.10, 1 },
+        text      = { 0.95, 0.91, 0.80 },       -- ivoire
+        textDim   = { 0.62, 0.55, 0.42 },
+        track     = { 0.38, 0.29, 0.16, 1 },
+        red       = { 0.75, 0.15, 0.10 },
     }
 
     local function GetDB()
@@ -596,7 +599,7 @@ do
         end
     end
 
-    local WIDTH, HEIGHT, PAD = 400, 560, 10
+    local WIDTH, HEIGHT, PAD = 410, 570, 14
 
     local panel = CreateFrame("Frame", PANEL_NAME, UIParent)
     panel:SetWidth(WIDTH)
@@ -608,22 +611,36 @@ do
     panel:EnableMouse(true)
     panel:EnableMouseWheel(true)
 
-    local bg = panel:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(panel)
-    bg:SetTexture(C.bg[1], C.bg[2], C.bg[3], C.bg[4])
+    -- Marbre sombre tuile + bordure doree (textures du client : OPAQUE)
+    panel:SetBackdrop({
+        bgFile   = "Interface\\FrameGeneral\\UI-Background-Marble",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
+        tile = true, tileSize = 256, edgeSize = 26,
+        insets = { left = 7, right = 7, top = 7, bottom = 7 },
+    })
+    panel:SetBackdropColor(C.marble[1], C.marble[2], C.marble[3], C.marble[4])
+    panel:SetBackdropBorderColor(1, 0.92, 0.65, 1)
+
+    -- voile sombre interieur pour le contraste du texte
+    local shade = panel:CreateTexture(nil, "BORDER")
+    shade:SetPoint("TOPLEFT", panel, "TOPLEFT", 7, -7)
+    shade:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -7, 7)
+    shade:SetTexture(0, 0, 0, 0.55)
 
     -- barre de titre
     local titleBar = CreateFrame("Frame", nil, panel)
-    titleBar:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, 0)
-    titleBar:SetPoint("TOPRIGHT", panel, "TOPRIGHT", 0, 0)
-    titleBar:SetHeight(30)
+    titleBar:SetPoint("TOPLEFT", panel, "TOPLEFT", 7, -7)
+    titleBar:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -7, -7)
+    titleBar:SetHeight(32)
     titleBar:EnableMouse(true)
-    local tbg = titleBar:CreateTexture(nil, "BACKGROUND")
-    tbg:SetAllPoints(titleBar)
-    tbg:SetTexture(0.08, 0.07, 0.12, 1)
     local titleText = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    titleText:SetPoint("LEFT", titleBar, "LEFT", 10, 0)
-    titleText:SetText(C.title .. GGL_PANEL_TITLE .. "|r")
+    titleText:SetPoint("CENTER", titleBar, "CENTER", 0, 0)
+    titleText:SetText(C.goldHex .. "—  " .. GGL_PANEL_TITLE .. "  —|r")
+    local titleLine = titleBar:CreateTexture(nil, "OVERLAY")
+    titleLine:SetPoint("BOTTOMLEFT", titleBar, "BOTTOMLEFT", 6, 0)
+    titleLine:SetPoint("BOTTOMRIGHT", titleBar, "BOTTOMRIGHT", -6, 0)
+    titleLine:SetHeight(1)
+    titleLine:SetTexture(C.gold[1], C.gold[2], C.gold[3], 0.7)
     titleBar:RegisterForDrag("LeftButton")
     titleBar:SetScript("OnDragStart", function() panel:StartMoving() end)
     titleBar:SetScript("OnDragStop", function()
@@ -634,25 +651,25 @@ do
     local closeBtn = CreateFrame("Button", nil, titleBar)
     closeBtn:SetWidth(22)
     closeBtn:SetHeight(22)
-    closeBtn:SetPoint("RIGHT", titleBar, "RIGHT", -6, 0)
+    closeBtn:SetPoint("RIGHT", titleBar, "RIGHT", -2, 0)
     local closeText = closeBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     closeText:SetPoint("CENTER", closeBtn, "CENTER", 0, 0)
-    closeText:SetText("|cffaaaaaaX|r")
+    closeText:SetText("|cffbf261aX|r")
     closeBtn:SetScript("OnClick", function() panel:Hide() end)
 
     -- zone scrollable
     local scroll = CreateFrame("ScrollFrame", PANEL_NAME .. "Scroll", panel)
-    scroll:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -34)
-    scroll:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", 0, 6)
+    scroll:SetPoint("TOPLEFT", panel, "TOPLEFT", 8, -42)
+    scroll:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -8, 10)
     local content = CreateFrame("Frame", PANEL_NAME .. "Content", scroll)
-    content:SetWidth(WIDTH)
+    content:SetWidth(WIDTH - 16)
     content:SetHeight(1)
     scroll:SetScrollChild(content)
 
     panel:SetScript("OnMouseWheel", function(self, delta)
         delta = delta or _G.arg1 or 0
         local cur = scroll:GetVerticalScroll() or 0
-        local maxScroll = (content:GetHeight() or 0) - (HEIGHT - 40)
+        local maxScroll = (content:GetHeight() or 0) - (HEIGHT - 55)
         if maxScroll < 0 then maxScroll = 0 end
         local target = cur - delta * 40
         if target < 0 then target = 0 end
@@ -661,13 +678,13 @@ do
     end)
 
     local refreshers = {}
-    local yOffset = -6
+    local yOffset = -4
 
     local function AddTooltip(widget, label, tooltip)
         widget:SetScript("OnEnter", function()
-            if not tooltip then return end
+            if not tooltip or tooltip == "" then return end
             GameTooltip:SetOwner(widget, "ANCHOR_RIGHT")
-            GameTooltip:AddLine(label, 0.9, 0.75, 1)
+            GameTooltip:AddLine(label, C.gold[1], C.gold[2], C.gold[3])
             GameTooltip:AddLine(tooltip, 1, 1, 1, 1)
             GameTooltip:Show()
         end)
@@ -677,12 +694,18 @@ do
     local function NewCard(height)
         local card = CreateFrame("Frame", nil, content)
         card:SetPoint("TOPLEFT", content, "TOPLEFT", PAD, yOffset)
-        card:SetWidth(WIDTH - PAD * 2)
+        card:SetWidth(WIDTH - 16 - PAD * 2)
         card:SetHeight(height)
         local cbg = card:CreateTexture(nil, "BACKGROUND")
         cbg:SetAllPoints(card)
         cbg:SetTexture(C.card[1], C.card[2], C.card[3], C.card[4])
-        yOffset = yOffset - height - 8
+        -- filet dore a gauche (colonne romaine)
+        local pillar = card:CreateTexture(nil, "BORDER")
+        pillar:SetPoint("TOPLEFT", card, "TOPLEFT", 0, 0)
+        pillar:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 0, 0)
+        pillar:SetWidth(2)
+        pillar:SetTexture(C.gold[1], C.gold[2], C.gold[3], 0.55)
+        yOffset = yOffset - height - 10
         return card
     end
 
@@ -691,13 +714,11 @@ do
     for s = 1, #GGL_PANEL_SECTIONS do
         local section = GGL_PANEL_SECTIONS[s]
 
-        -- header de section
         local header = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         header:SetPoint("TOPLEFT", content, "TOPLEFT", PAD + 2, yOffset - 2)
-        header:SetText(GGL_ColorHex .. section.title .. "|r")
+        header:SetText(C.goldHex .. section.title .. "|r")
         yOffset = yOffset - 18
 
-        -- hauteur de la carte
         local h = 8
         for it = 1, #section.items do
             local e = section.items[it]
@@ -713,7 +734,7 @@ do
                 local box = CreateFrame("Button", nil, card)
                 box:SetWidth(16)
                 box:SetHeight(16)
-                box:SetPoint("TOPLEFT", card, "TOPLEFT", 8, rowY - 3)
+                box:SetPoint("TOPLEFT", card, "TOPLEFT", 10, rowY - 3)
                 local fill = box:CreateTexture(nil, "ARTWORK")
                 fill:SetAllPoints(box)
                 local check = box:CreateTexture(nil, "OVERLAY")
@@ -721,6 +742,7 @@ do
                 check:SetPoint("CENTER", box, "CENTER", 0, 0)
                 check:SetWidth(20)
                 check:SetHeight(20)
+                check:SetVertexColor(0.25, 0.13, 0.02)
 
                 local label = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
                 label:SetPoint("LEFT", box, "RIGHT", 8, 0)
@@ -748,7 +770,7 @@ do
 
             elseif e.type == "cycle" then
                 local label = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                label:SetPoint("TOPLEFT", card, "TOPLEFT", 8, rowY - 6)
+                label:SetPoint("TOPLEFT", card, "TOPLEFT", 10, rowY - 6)
                 label:SetText(e.label)
 
                 local chips = {}
@@ -767,7 +789,6 @@ do
                     ctext:SetText(opt.text)
                     chip.fill = cfill
                     chip.value = opt.value
-                    chip.text = ctext
                     chips[ci] = chip
                     chip:SetScript("OnClick", function()
                         DBSet(e.key, opt.value)
@@ -799,7 +820,7 @@ do
 
             elseif e.type == "slider" then
                 local label = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                label:SetPoint("TOPLEFT", card, "TOPLEFT", 8, rowY - 6)
+                label:SetPoint("TOPLEFT", card, "TOPLEFT", 10, rowY - 6)
                 label:SetText(e.label)
 
                 local valueText = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -808,7 +829,7 @@ do
                 local slider = CreateFrame("Slider", nil, card)
                 slider:SetOrientation("HORIZONTAL")
                 slider:SetPoint("TOPLEFT", card, "TOPLEFT", 150, rowY - 4)
-                slider:SetWidth(WIDTH - PAD * 2 - 150 - 56)
+                slider:SetWidth(WIDTH - 16 - PAD * 2 - 150 - 58)
                 slider:SetHeight(16)
                 slider:SetMinMaxValues(e.min, e.max)
                 slider:SetValueStep(e.step or 1)
@@ -816,7 +837,7 @@ do
                 track:SetPoint("LEFT", slider, "LEFT", 0, 0)
                 track:SetPoint("RIGHT", slider, "RIGHT", 0, 0)
                 track:SetHeight(4)
-                track:SetTexture(C.track[1], C.track[2], C.track[3], 1)
+                track:SetTexture(C.track[1], C.track[2], C.track[3], C.track[4])
                 slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
                 slider:EnableMouse(true)
 
@@ -826,7 +847,7 @@ do
                     local v = DBGet(e.key, e.default)
                     if type(v) ~= "number" then v = e.default end
                     slider:SetValue(v)
-                    valueText:SetText(GGL_ColorHex .. v .. (e.suffix or "") .. "|r")
+                    valueText:SetText(C.goldHex .. v .. (e.suffix or "") .. "|r")
                     updating = false
                 end
                 slider:SetScript("OnValueChanged", function(self, value)
@@ -834,7 +855,7 @@ do
                     value = value or _G.arg1
                     value = math.floor((value or e.default) + 0.5)
                     DBSet(e.key, value)
-                    valueText:SetText(GGL_ColorHex .. value .. (e.suffix or "") .. "|r")
+                    valueText:SetText(C.goldHex .. value .. (e.suffix or "") .. "|r")
                 end)
                 AddTooltip(slider, e.label, e.tooltip)
                 refreshers[#refreshers + 1] = Refresh
@@ -846,7 +867,6 @@ do
 
     content:SetHeight(-yOffset + 12)
 
-    -- resync visuel (barre, /action et macros restent synchronises)
     local elapsedSince = 0
     panel:SetScript("OnUpdate", function(self, elapsed)
         elapsedSince = elapsedSince + (elapsed or _G.arg1 or 0.02)
@@ -858,6 +878,65 @@ do
     end)
 
     panel:Hide()
+
+    ----------------------------------------------------------------------
+    -- Bouton minimap : clic = panneau, glisser = repositionner
+    ----------------------------------------------------------------------
+    if Minimap then
+        local mmBtn = CreateFrame("Button", PANEL_NAME .. "MinimapButton", Minimap)
+        mmBtn:SetWidth(32)
+        mmBtn:SetHeight(32)
+        mmBtn:SetFrameStrata("MEDIUM")
+        mmBtn:SetFrameLevel(8)
+
+        local mmIcon = mmBtn:CreateTexture(nil, "BACKGROUND")
+        mmIcon:SetTexture("Interface\\Icons\\INV_Shield_06")
+        mmIcon:SetWidth(20)
+        mmIcon:SetHeight(20)
+        mmIcon:SetPoint("CENTER", mmBtn, "CENTER", 0, 1)
+        mmIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+
+        local mmBorder = mmBtn:CreateTexture(nil, "OVERLAY")
+        mmBorder:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+        mmBorder:SetWidth(54)
+        mmBorder:SetHeight(54)
+        mmBorder:SetPoint("TOPLEFT", mmBtn, "TOPLEFT", 0, 0)
+
+        mmBtn:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+
+        local function UpdatePosition()
+            local angle = DBGet("GGL-MinimapPos", 210)
+            if type(angle) ~= "number" then angle = 210 end
+            local rad = math.rad(angle)
+            mmBtn:SetPoint("CENTER", Minimap, "CENTER", 80 * math.cos(rad), 80 * math.sin(rad))
+        end
+        UpdatePosition()
+
+        mmBtn:RegisterForDrag("LeftButton")
+        mmBtn:SetScript("OnDragStart", function() mmBtn.dragging = true end)
+        mmBtn:SetScript("OnDragStop", function() mmBtn.dragging = false end)
+        mmBtn:SetScript("OnUpdate", function()
+            if not mmBtn.dragging then return end
+            local mx, my = Minimap:GetCenter()
+            local cx, cy = _G.GetCursorPosition()
+            local scale = Minimap:GetEffectiveScale()
+            cx = cx / scale
+            cy = cy / scale
+            local angle = math.deg(math.atan2(cy - my, cx - mx))
+            DBSet("GGL-MinimapPos", angle)
+            UpdatePosition()
+        end)
+        mmBtn:SetScript("OnClick", function()
+            if panel:IsShown() then panel:Hide() else panel:Show() end
+        end)
+        mmBtn:SetScript("OnEnter", function()
+            GameTooltip:SetOwner(mmBtn, "ANCHOR_LEFT")
+            GameTooltip:AddLine(GGL_PANEL_TITLE, C.gold[1], C.gold[2], C.gold[3])
+            GameTooltip:AddLine("Clic : options  |  Glisser : deplacer", 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        mmBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
 
     _G.SLASH_GGLUI1 = "/gglui"
     _G.SLASH_GGLUI2 = "/ggaa"
