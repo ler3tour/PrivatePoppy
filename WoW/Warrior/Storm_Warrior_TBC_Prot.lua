@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
--- [GGL] Warrior TBC Prot - Rotation CodeSnippet (Order 1)
+-- [Storm] Warrior TBC Prot - Rotation CodeSnippet (Order 1)
 --
 -- Profil Protection oriente DPS/menace max, base sur le gameplay des
 -- meilleurs parses mondiaux prot (top 10% Warcraft Logs, agrege par

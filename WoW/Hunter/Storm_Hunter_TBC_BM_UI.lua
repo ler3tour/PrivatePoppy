@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
--- [GGL] Hunter TBC BM - Profile UI CodeSnippet (Order 2)
+-- [Storm] Hunter TBC BM - Profile UI CodeSnippet (Order 2)
 -- Panneau /action + barre de boutons a l'ecran.
 --------------------------------------------------------------------------
 
@@ -307,7 +307,7 @@ ProfileUI[#ProfileUI + 1]                           = {
 --------------------------------------------------------------------------
 -- [[ BARRE DE TOGGLES A L'ECRAN ]]
 -- Icone en couleur + lisere = ACTIVE | grisee = OFF | clic = bascule
--- Shift + glisser : deplacer | /gglbar : masquer
+-- Shift + glisser : deplacer | /stormbar : masquer
 --------------------------------------------------------------------------
 do
     local TMW                     = _G.TMW
@@ -364,9 +364,9 @@ do
         return value and true or false
     end
 
-    local bar = _G.GGLHunterToggleBar
+    local bar = _G.StormHunterToggleBar
     if not bar then
-        bar = CreateFrame("Frame", "GGLHunterToggleBar", UIParent)
+        bar = CreateFrame("Frame", "StormHunterToggleBar", UIParent)
         bar:SetWidth(PAD * 2 + #BUTTONS * SIZE + (#BUTTONS - 1) * GAP)
         bar:SetHeight(PAD * 2 + SIZE)
         bar:SetPoint("CENTER", UIParent, "CENTER", 0, -220)
@@ -400,7 +400,7 @@ do
 
         for i = 1, #BUTTONS do
             local entry = BUTTONS[i]
-            local btn = CreateFrame("Button", "GGLHunterToggleButton" .. i, bar)
+            local btn = CreateFrame("Button", "StormHunterToggleButton" .. i, bar)
             btn:SetWidth(SIZE)
             btn:SetHeight(SIZE)
             btn:SetPoint("LEFT", bar, "LEFT", PAD + (i - 1) * (SIZE + GAP), 0)
@@ -492,8 +492,8 @@ do
             end
         end)
 
-        _G.SLASH_GGLBAR1 = "/gglbar"
-        _G.SlashCmdList["GGLBAR"] = function()
+        _G.SLASH_STORMBAR1 = "/stormbar"
+        _G.SlashCmdList["STORMBAR"] = function()
             if bar:IsShown() then
                 bar:Hide()
             else
@@ -506,7 +506,7 @@ end
 
 -- Configuration du panneau overlay
 local GGL_ColorHex = "|cffe8c15c"
-local GGL_PANEL_TITLE = "GGL — HUNTER BM"
+local GGL_PANEL_TITLE = "STORM — HUNTER BM"
 local GGL_PANEL_SECTIONS = {
     { title = "SHOT WEAVING (Auto Shot sacre)", items = {
         { type = "check", key = "UseSteadyShot", label = "Steady Shot (weaving)", default = true, tooltip = "Le filler du cycle 1:1" },
@@ -540,9 +540,9 @@ local GGL_PANEL_SECTIONS = {
 }
 
 --------------------------------------------------------------------------
--- [[ OVERLAY "GGL ROTATIONS" ]] v2 — design Rome antique
+-- [[ OVERLAY "STORM ROTATIONS" ]] v2 — design Rome antique
 -- Marbre sombre + bordures or (opaque, lisible), bouton minimap.
--- /ggaa ou /gglui : afficher/masquer | glisser la barre de titre
+-- /storm ou /ggaa : afficher/masquer | glisser la barre de titre
 -- Molette : scroll | Synchronise avec /action, la barre et les macros
 --------------------------------------------------------------------------
 do
@@ -554,7 +554,7 @@ do
     local GetToggle       = A.GetToggle
     local math            = _G.math
 
-    local PANEL_NAME      = "GGLPanel" .. (A.PlayerClass or "X")
+    local PANEL_NAME      = "StormPanel" .. (A.PlayerClass or "X")
     if _G[PANEL_NAME] then return end
 
     -- Palette "Rome antique" : marbre sombre, or, bronze, ivoire
@@ -905,7 +905,7 @@ do
         mmBtn:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
         local function UpdatePosition()
-            local angle = DBGet("GGL-MinimapPos", 210)
+            local angle = DBGet("Storm-MinimapPos", 210)
             if type(angle) ~= "number" then angle = 210 end
             local rad = math.rad(angle)
             mmBtn:SetPoint("CENTER", Minimap, "CENTER", 80 * math.cos(rad), 80 * math.sin(rad))
@@ -923,7 +923,7 @@ do
             cx = cx / scale
             cy = cy / scale
             local angle = math.deg(math.atan2(cy - my, cx - mx))
-            DBSet("GGL-MinimapPos", angle)
+            DBSet("Storm-MinimapPos", angle)
             UpdatePosition()
         end)
         mmBtn:SetScript("OnClick", function()
@@ -938,9 +938,9 @@ do
         mmBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     end
 
-    _G.SLASH_GGLUI1 = "/gglui"
-    _G.SLASH_GGLUI2 = "/ggaa"
-    _G.SlashCmdList["GGLUI"] = function()
+    _G.SLASH_STORMUI1 = "/storm"
+    _G.SLASH_STORMUI2 = "/ggaa"
+    _G.SlashCmdList["STORMUI"] = function()
         if panel:IsShown() then panel:Hide() else panel:Show() end
     end
 end

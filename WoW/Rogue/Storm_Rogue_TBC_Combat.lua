@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
--- [GGL] Rogue TBC Combat - Rotation CodeSnippet (Order 1)
+-- [Storm] Rogue TBC Combat - Rotation CodeSnippet (Order 1)
 --
 -- Rogue Combat epees 20/41/0 oriente parse (PvE raid) :
 --

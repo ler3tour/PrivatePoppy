@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
--- [GGL] Warrior TBC PvP - Profile UI CodeSnippet (Order 2)
+-- [Storm] Warrior TBC PvP - Profile UI CodeSnippet (Order 2)
 --
 -- Construit l'onglet classe du panneau /action : checkboxes, sliders et
 -- dropdowns modifiables EN JEU, a la volee, sans reload.
@@ -549,7 +549,7 @@ ProfileUI[#ProfileUI + 1]                           = {
 --   - icone grisee                    = DESACTIVE
 --   - Disarm : clic cycle OFF -> "CD" (on cooldown) -> "BURST"
 --   - "F" = kick @focus | 1er bouton = verrou Posture defensive
---   - clic gauche : bascule | Shift + glisser : deplacer | /gglbar : masquer
+--   - clic gauche : bascule | Shift + glisser : deplacer | /stormbar : masquer
 --------------------------------------------------------------------------
 do
     local TMW             = _G.TMW
@@ -617,9 +617,9 @@ do
         return value and true or false
     end
 
-    local bar = _G.GGLPvPToggleBar
+    local bar = _G.StormPvPToggleBar
     if not bar then
-        bar = CreateFrame("Frame", "GGLPvPToggleBar", UIParent)
+        bar = CreateFrame("Frame", "StormPvPToggleBar", UIParent)
         bar:SetWidth(PAD * 2 + #BUTTONS * SIZE + (#BUTTONS - 1) * GAP)
         bar:SetHeight(PAD * 2 + SIZE)
         bar:SetPoint("CENTER", UIParent, "CENTER", 0, -220)
@@ -653,7 +653,7 @@ do
 
         for i = 1, #BUTTONS do
             local entry = BUTTONS[i]
-            local btn = CreateFrame("Button", "GGLPvPToggleButton" .. i, bar)
+            local btn = CreateFrame("Button", "StormPvPToggleButton" .. i, bar)
             btn:SetWidth(SIZE)
             btn:SetHeight(SIZE)
             btn:SetPoint("LEFT", bar, "LEFT", PAD + (i - 1) * (SIZE + GAP), 0)
@@ -758,8 +758,8 @@ do
             end
         end)
 
-        _G.SLASH_GGLBAR1 = "/gglbar"
-        _G.SlashCmdList["GGLBAR"] = function()
+        _G.SLASH_STORMBAR1 = "/stormbar"
+        _G.SlashCmdList["STORMBAR"] = function()
             if bar:IsShown() then
                 bar:Hide()
             else
@@ -772,7 +772,7 @@ end
 
 -- Configuration du panneau overlay
 local GGL_ColorHex = "|cffe8c15c"
-local GGL_PANEL_TITLE = "GGL — WARRIOR PVP ARMS"
+local GGL_PANEL_TITLE = "STORM — WARRIOR PVP ARMS"
 local GGL_PANEL_SECTIONS = {
     { title = "GENERAL", items = {
         { type = "check", key = "ForceDefStance", label = "Verrou Posture defensive", default = false, tooltip = "Y reste tant qu'actif" },
@@ -831,9 +831,9 @@ local GGL_PANEL_SECTIONS = {
 }
 
 --------------------------------------------------------------------------
--- [[ OVERLAY "GGL ROTATIONS" ]] v2 — design Rome antique
+-- [[ OVERLAY "STORM ROTATIONS" ]] v2 — design Rome antique
 -- Marbre sombre + bordures or (opaque, lisible), bouton minimap.
--- /ggaa ou /gglui : afficher/masquer | glisser la barre de titre
+-- /storm ou /ggaa : afficher/masquer | glisser la barre de titre
 -- Molette : scroll | Synchronise avec /action, la barre et les macros
 --------------------------------------------------------------------------
 do
@@ -845,7 +845,7 @@ do
     local GetToggle       = A.GetToggle
     local math            = _G.math
 
-    local PANEL_NAME      = "GGLPanel" .. (A.PlayerClass or "X")
+    local PANEL_NAME      = "StormPanel" .. (A.PlayerClass or "X")
     if _G[PANEL_NAME] then return end
 
     -- Palette "Rome antique" : marbre sombre, or, bronze, ivoire
@@ -1196,7 +1196,7 @@ do
         mmBtn:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
         local function UpdatePosition()
-            local angle = DBGet("GGL-MinimapPos", 210)
+            local angle = DBGet("Storm-MinimapPos", 210)
             if type(angle) ~= "number" then angle = 210 end
             local rad = math.rad(angle)
             mmBtn:SetPoint("CENTER", Minimap, "CENTER", 80 * math.cos(rad), 80 * math.sin(rad))
@@ -1214,7 +1214,7 @@ do
             cx = cx / scale
             cy = cy / scale
             local angle = math.deg(math.atan2(cy - my, cx - mx))
-            DBSet("GGL-MinimapPos", angle)
+            DBSet("Storm-MinimapPos", angle)
             UpdatePosition()
         end)
         mmBtn:SetScript("OnClick", function()
@@ -1229,9 +1229,9 @@ do
         mmBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     end
 
-    _G.SLASH_GGLUI1 = "/gglui"
-    _G.SLASH_GGLUI2 = "/ggaa"
-    _G.SlashCmdList["GGLUI"] = function()
+    _G.SLASH_STORMUI1 = "/storm"
+    _G.SLASH_STORMUI2 = "/ggaa"
+    _G.SlashCmdList["STORMUI"] = function()
         if panel:IsShown() then panel:Hide() else panel:Show() end
     end
 end

@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
--- [GGL] Warrior TBC PvP - Rotation CodeSnippet (Order 1)
+-- [Storm] Warrior TBC PvP - Rotation CodeSnippet (Order 1)
 --
 -- Snippet TellMeWhen "Code Snippets" pour le framework Action
 -- (https://github.com/MisterCrab/Action), au format des profils GGL.

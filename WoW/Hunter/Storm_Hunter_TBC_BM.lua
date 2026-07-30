@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------
--- [GGL] Hunter TBC BM - Rotation CodeSnippet (Order 1)
+-- [Storm] Hunter TBC BM - Rotation CodeSnippet (Order 1)
 --
 -- Chasseur Beast Mastery 41/20/0 oriente parse (PvE raid).
 -- TOUT le parse BM repose sur le shot weaving : ne JAMAIS retarder un

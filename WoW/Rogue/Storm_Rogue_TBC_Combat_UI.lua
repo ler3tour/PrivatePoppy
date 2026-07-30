@@ -1,123 +1,85 @@
 --------------------------------------------------------------------------
--- [GGL] Warrior TBC Prot - Profile UI CodeSnippet (Order 2)
--- Panneau /action pour le profil Protection DPS max.
+-- [Storm] Rogue TBC Combat - Profile UI CodeSnippet (Order 2)
+-- Panneau /action + barre de boutons a l'ecran.
 --------------------------------------------------------------------------
 
 local A                            = _G.Action
-local WR                           = A[A.PlayerClass]
+local RO                           = A[A.PlayerClass]
 local L                            = {
-    AOE                            = { enUS = "Use\nAoE",
-        frFR = "Utiliser\nAoE" },
-    AOETT                          = { enUS = "Enables Cleave on 2+ targets",
-        frFR = "Active Enchainement sur 2+ cibles" },
-    STOPCAST                       = { enUS = "Stop cast\n(HS/Cleave queue)",
-        frFR = "Stop cast\n(file HS/Cleave)" },
-    STOPCASTTT                     = { enUS = "Cancels a queued Heroic Strike/Cleave if the target becomes immune",
-        frFR = "Annule un Coup heroique/Enchainement en file si la cible devient immunisee" },
-    ROTATION_HEADER                = { enUS = "Rotation (Shield Slam > Revenge > Devastate)",
-        frFR = "Rotation (Heurt de bouclier > Vengeance > Devastation)" },
-    ZERKERDPS                      = { enUS = "Zerker DPS mode\n(top logs)",
-        frFR = "Mode Zerker DPS\n(top logs)" },
-    ZERKERDPSTT                    = { enUS = "The playstyle of top-parsing prot warriors when NOT actively tanking (~80% Berserker Stance uptime observed): Devastate/Heroic Strike spam in Berserker Stance, Whirlwind and Berserker Rage on cooldown, Recklessness in burst, Intercept.\nOFF (default): classic Defensive Stance tanking mode.\nMacro: /run Action.SetToggle({2, \"ZerkerDPS\"})",
-        frFR = "Le style des guerriers prot top parses quand ils ne tankent PAS activement (~80 % d'uptime Posture berserker observe) : spam Devastation/Coup heroique en Posture berserker, Tourbillon et Rage berserker des que disponibles, Temerite en burst, Interception.\nOFF (defaut) : mode tank classique en Posture defensive.\nMacro : /run Action.SetToggle({2, \"ZerkerDPS\"})" },
-    SHIELDBLOCK                    = { enUS = WR.ShieldBlock:Info() .. "\nOn cooldown",
-        frFR = WR.ShieldBlock:Info() .. "\nDes que possible" },
-    SHIELDBLOCKTT                  = { enUS = "Off-GCD: prevents crushing blows AND generates Revenge procs (blocked hits enable Revenge) — top parses keep it rolling",
-        frFR = "Hors GCD : evite les coups ecrasants ET genere des procs Vengeance (les coups bloques activent Vengeance) — les top parses le maintiennent en continu" },
-    THUNDERCLAP                    = { enUS = WR.ThunderClap:Info() .. "\nMaintain debuff",
-        frFR = WR.ThunderClap:Info() .. "\nMaintenir le debuff" },
-    THUNDERCLAPTT                  = { enUS = "Top parses maintain it themselves (~88% uptime observed). Turn OFF only if another warrior applies it",
-        frFR = "Les top parses le maintiennent eux-memes (~88 % d'uptime observe). OFF seulement si un autre guerrier l'applique" },
-    HASTEPOTION                    = { enUS = WR.HastePotion:Info() .. "\nOn boss (burst)",
-        frFR = WR.HastePotion:Info() .. "\nSur boss (burst)" },
-    HASTEPOTIONTT                  = { enUS = "Top parses double-pot Haste Potion on boss kills",
-        frFR = "Les top parses double-potent la Potion de hate sur les kills de boss" },
-    SAPPER                         = { enUS = "Super Sapper Charge\nAoE packs",
-        frFR = "Super charge de sapeur\nPacks AoE" },
-    SAPPERTT                       = { enUS = "Engineering AoE on 3+ enemies in melee (requires AoE + Burst toggles)",
-        frFR = "AoE ingenieur sur 3+ ennemis en melee (necessite les toggles AoE + Burst)" },
-    BRDANCE                        = { enUS = WR.BerserkerRage:Info() .. "\nStance dance (rage)",
-        frFR = WR.BerserkerRage:Info() .. "\nStance dance (rage)" },
-    BRDANCETT                      = { enUS = "Quick Def->Berserker->Def dance for extra rage, only below 10 rage and above 80% HP (seen on top parses). Risky while actively tanking",
-        frFR = "Aller-retour eclair Def->Berserker->Def pour de la rage, seulement sous 10 rage et au-dessus de 80 % PV (vu sur les top parses). Risque en tanking actif" },
-    DEMOSHOUT                      = { enUS = WR.DemoralizingShout:Info() .. "\nMaintain debuff",
-        frFR = WR.DemoralizingShout:Info() .. "\nMaintenir le debuff" },
-    DEMOSHOUTTT                    = { enUS = "Costs a GCD: turn OFF for maximum DPS if another warrior applies it",
-        frFR = "Coute un GCD : OFF pour le DPS maximum si un autre guerrier l'applique" },
-    KICK_SHIELDBASH                = { enUS = WR.ShieldBash:Info() .. "\nAuto kick",
-        frFR = WR.ShieldBash:Info() .. "\nKick auto" },
-    KICK_SHIELDBASHTT              = { enUS = "Interrupts enemy casts (dungeons / caster trash)",
-        frFR = "Interrompt les casts ennemis (donjons / trash casteurs)" },
-    HEROICSTRIKE_PWR               = { enUS = WR.HeroicStrike:Info() .. "\n>= rage (value)",
-        frFR = WR.HeroicStrike:Info() .. "\n>= rage (valeur)" },
-    HEROICSTRIKE_PWRTT             = { enUS = "Rage dump threshold. The reserve logic already protects Shield Slam/Shield Block; lower = more HS = more DPS when incoming rage is high",
-        frFR = "Seuil de vidange. La reserve protege deja Heurt de bouclier/Blocage ; plus bas = plus de HS = plus de DPS quand la rage entrante est forte" },
-    CLEAVE_PWR                     = { enUS = WR.Cleave:Info() .. "\n>= rage (value)",
-        frFR = WR.Cleave:Info() .. "\n>= rage (valeur)" },
-    CLEAVE_PWRTT                   = { enUS = "Minimum rage before queueing Cleave (AoE mode)",
-        frFR = "Rage minimale avant de mettre Enchainement en file (mode AoE)" },
-    BLOODRAGE_LIMITHP              = { enUS = WR.Bloodrage:Info() .. "\n>= health (%)",
-        frFR = WR.Bloodrage:Info() .. "\n>= sante (%)" },
-    BLOODRAGE_LIMITHPTT            = { enUS = "Bloodrage only above this health percentage",
-        frFR = "Sanguinaire uniquement au-dessus de ce pourcentage de sante" },
-    MIGHTYRAGEPOTION               = { enUS = WR.MightyRagePotion:Info() .. "\nIn burst window",
-        frFR = WR.MightyRagePotion:Info() .. "\nEn fenetre de burst" },
-    MIGHTYRAGEPOTIONTT             = { enUS = "Uses the potion during the burst window when rage is low",
-        frFR = "Utilise la potion pendant la fenetre de burst quand la rage manque" },
+    KICK                           = { enUS = RO.Kick:Info() .. "\nAuto kick",
+        frFR = RO.Kick:Info() .. "\nKick auto" },
+    KICKTT                         = { enUS = "Automatically interrupts enemy casts",
+        frFR = "Interrompt automatiquement les casts ennemis" },
+    ROTATION_HEADER                = { enUS = "Cycle (SnD > Rupture > Eviscerate)",
+        frFR = "Cycle (SnD > Rupture > Eviscerate)" },
+    RUPTURE                        = { enUS = RO.Rupture:Info() .. "\n5 CP",
+        frFR = RO.Rupture:Info() .. "\n5 CP" },
+    RUPTURETT                      = { enUS = "5 CP Rupture when Slice and Dice is covered — best damage per energy with raid AP\nOFF: cycle becomes SnD + Eviscerate",
+        frFR = "Rupture 5 CP quand Slice and Dice est couvert — meilleurs degats par energie avec l'AP de raid\nOFF : le cycle devient SnD + Eviscerate" },
+    EVISCERATE                     = { enUS = RO.Eviscerate:Info() .. "\n5 CP",
+        frFR = RO.Eviscerate:Info() .. "\n5 CP" },
+    EVISCERATETT                   = { enUS = "5 CP Eviscerate only when SnD AND Rupture are already covered (or target is dying)",
+        frFR = "Eviscerate 5 CP seulement quand SnD ET Rupture sont deja couverts (ou cible mourante)" },
+    EXPOSEARMOR                    = { enUS = RO.ExposeArmor:Info() .. "\nDouble uptime",
+        frFR = RO.ExposeArmor:Info() .. "\nDouble uptime" },
+    EXPOSEARMORTT                  = { enUS = "The top-log cycle: 5 CP Expose Armor kept at ~90-99% uptime alongside Slice and Dice (skipped automatically if a warrior maintains Sunder Armor)\nTurn OFF if your raid does not want EA from you",
+        frFR = "Le cycle des top logs : Expose Armor 5 CP maintenu a ~90-99 % d'uptime en plus de Slice and Dice (ignore automatiquement si un guerrier maintient Sunder)\nOFF si votre raid ne veut pas votre EA" },
+    SAPPERS                        = { enUS = "Sapper Charges\nOn boss (burst)",
+        frFR = "Charges de sapeur\nSur boss (burst)" },
+    SAPPERSTT                      = { enUS = "Super + Goblin Sapper Charges used even single-target on bosses (top logs). Requires engineering",
+        frFR = "Super + Charge de sapeur gobelin utilisees meme en mono-cible sur les boss (top logs). Ingenierie requise" },
+    OPENER_GARROTE                 = { enUS = RO.Garrote:Info() .. "\nStealth opener",
+        frFR = RO.Garrote:Info() .. "\nOpener en camouflage" },
+    OPENER_GARROTETT               = { enUS = "OFF (default, matches top logs): opens with Sinister Strike directly from stealth\nON: opens with Garrote (bleed + 1 CP, delays SnD)",
+        frFR = "OFF (defaut, conforme aux top logs) : ouvre directement au Sinister Strike depuis le camouflage\nON : ouvre au Garrote (saignement + 1 CP, retarde SnD)" },
+    BACKSTAB                       = { enUS = RO.Backstab:Info() .. "\nDagger builder",
+        frFR = RO.Backstab:Info() .. "\nBuilder dague" },
+    BACKSTABTT                     = { enUS = "ON: uses Backstab instead of Sinister Strike (dagger main hand, positional!)",
+        frFR = "ON : utilise Backstab a la place de Sinister Strike (dague en main droite, positionnel !)" },
+    BURST_HEADER                   = { enUS = "Cooldowns & consumables",
+        frFR = "Cooldowns & consommables" },
+    BLADEFLURRY                    = { enUS = RO.BladeFlurry:Info() .. "\nOn cooldown",
+        frFR = RO.BladeFlurry:Info() .. "\nDes que possible" },
+    BLADEFLURRYTT                  = { enUS = "+20% attack speed (and cleave) — used on cooldown during burst windows",
+        frFR = "+20 % vitesse d'attaque (et cleave) — utilise des que possible dans les fenetres de burst" },
+    ADRENALINERUSH                 = { enUS = RO.AdrenalineRush:Info() .. "\nWith Blade Flurry",
+        frFR = RO.AdrenalineRush:Info() .. "\nAvec Blade Flurry" },
+    ADRENALINERUSHTT               = { enUS = "Paired inside the Blade Flurry window for the stacked haste burst",
+        frFR = "Groupe dans la fenetre Blade Flurry pour cumuler la haste" },
+    THISTLETEA                     = { enUS = "Thistle Tea\nEnergy < 25",
+        frFR = "The aux chardons\nEnergie < 25" },
+    THISTLETEATT                   = { enUS = "Restores 100 energy on low-energy dips (off-GCD)",
+        frFR = "Rend 100 energies sur les creux (hors GCD)" },
+    HASTEPOTION                    = { enUS = RO.HastePotion:Info() .. "\nOn boss (burst)",
+        frFR = RO.HastePotion:Info() .. "\nSur boss (burst)" },
+    HASTEPOTIONTT                  = { enUS = "Used inside the Adrenaline Rush window on bosses",
+        frFR = "Utilisee dans la fenetre Adrenaline Rush sur les boss" },
     USE_TRINKET1                   = { enUS = "Trinket 1 (top slot)\nAuto use",
         frFR = "Bijou 1 (slot haut)\nUtilisation auto" },
     USE_TRINKET2                   = { enUS = "Trinket 2 (bottom slot)\nAuto use",
         frFR = "Bijou 2 (slot bas)\nUtilisation auto" },
-    USE_TRINKETTT                  = { enUS = "ON: the rotation uses this on-use trinket during the burst window (Burst toggle must be on)\nOFF: you keep manual control\nMacro: /run Action.SetToggle({2, \"UseTrinket1\"}) (or UseTrinket2)",
-        frFR = "ON : la rotation utilise ce bijou on-use pendant la fenetre de burst (toggle Burst actif requis)\nOFF : vous gardez le controle manuel\nMacro : /run Action.SetToggle({2, \"UseTrinket1\"}) (ou UseTrinket2)" },
-    SHOUT                          = { enUS = "Used shout:",
-        frFR = "Cri utilise :" },
-    SHOUTTT                        = { enUS = "Commanding Shout: +max health (tank default)\nBattle Shout: attack power (more DPS)",
-        frFR = "Cri de commandement : +PV max (defaut tank)\nCri de guerre : puissance d'attaque (plus de DPS)" },
-    DEFENSE_HEADER                 = { enUS = "Defense (manual by default)",
-        frFR = "Defense (manuel par defaut)" },
-    USE_SHIELDWALL                 = { enUS = WR.ShieldWall:Info() .. "\nAuto use",
-        frFR = WR.ShieldWall:Info() .. "\nUtilisation auto" },
-    USE_SHIELDWALLTT               = { enUS = "OFF (default): you keep full manual control of this cooldown\nON: the rotation fires it below the HP threshold\nMacro toggle: /run Action.SetToggle({2, \"UseShieldWall\"})",
-        frFR = "OFF (defaut) : vous gardez le controle manuel total de ce cooldown\nON : la rotation le declenche sous le seuil de PV\nMacro : /run Action.SetToggle({2, \"UseShieldWall\"})" },
-    USE_LASTSTAND                  = { enUS = WR.LastStand:Info() .. "\nAuto use",
-        frFR = WR.LastStand:Info() .. "\nUtilisation auto" },
-    USE_LASTSTANDTT                = { enUS = "OFF (default): you keep full manual control of this cooldown\nON: the rotation fires it below the HP threshold\nMacro toggle: /run Action.SetToggle({2, \"UseLastStand\"})",
-        frFR = "OFF (defaut) : vous gardez le controle manuel total de ce cooldown\nON : la rotation le declenche sous le seuil de PV\nMacro : /run Action.SetToggle({2, \"UseLastStand\"})" },
-    SHIELDWALL_HP                  = { enUS = WR.ShieldWall:Info() .. "\n<= health (%)",
-        frFR = WR.ShieldWall:Info() .. "\n<= sante (%)" },
-    LASTSTAND_HP                   = { enUS = WR.LastStand:Info() .. "\n<= health (%)",
-        frFR = WR.LastStand:Info() .. "\n<= sante (%)" },
-    DEFENSE_TT                     = { enUS = "0 = disabled. Triggers below this health percentage",
-        frFR = "0 = desactive. Se declenche sous ce pourcentage de sante" },
+    USE_TRINKETTT                  = { enUS = "ON: used during the burst window\nOFF: manual control",
+        frFR = "ON : utilise pendant la fenetre de burst\nOFF : controle manuel" },
+    CLOAK                          = { enUS = RO.CloakofShadows:Info() .. "\nAuto (<= 35% HP)",
+        frFR = RO.CloakofShadows:Info() .. "\nAuto (<= 35 % PV)" },
+    CLOAKTT                        = { enUS = "OFF (default): you keep manual control",
+        frFR = "OFF (defaut) : vous gardez le controle manuel" },
 }
 
 A.Data.ProfileEnabled[A.CurrentProfile]             = true
 A.Data.ProfileUI                                    = {
-    DateTime = "v1 (26.07.2026)",
+    DateTime = "v1 (27.07.2026)",
     [2]                                             = { LayoutOptions = { gutter = 2, padding = { left = 5, right = 5 } } },
     [7]                                             = {
-        ["kick"] = { Enabled = true, Key = "ShieldBash", LUAVER = 1, LUA = [[
+        ["kick"] = { Enabled = true, Key = "Kick", LUAVER = 1, LUA = [[
                 local Obj      = Action[Action.PlayerClass]
                 local Temp     = {"TotalImun", "DamagePhysImun", "KickImun"}
                 local castLeft, _, _, _, notInterruptAble = Unit(thisunit):IsCastingRemains()
-                return  Obj.ShieldBash and
-                        Obj.ShieldBash:IsReadyM(thisunit) and
-                        Obj.ShieldBash:AbsentImun(thisunit, Temp) and
+                return  Obj.Kick and
+                        Obj.Kick:IsReadyM(thisunit) and
+                        Obj.Kick:AbsentImun(thisunit, Temp) and
                         castLeft > 0 and
                         not notInterruptAble
-            ]] },
-        ["laststand"] = { Enabled = true, Key = "LastStand", LUAVER = 2, LUA = [[
-                local Obj = Action[Action.PlayerClass]
-                return  Obj.LastStand and
-                        Obj.LastStand:IsReadyM(thisunit) and
-                        UnitIsUnit(thisunit, "player")
-            ]] },
-        ["shieldwall"] = { Enabled = true, Key = "ShieldWall", LUAVER = 2, LUA = [[
-                local Obj = Action[Action.PlayerClass]
-                return  Obj.ShieldWall and
-                        Obj.ShieldWall:IsReadyM(thisunit) and
-                        UnitIsUnit(thisunit, "player")
             ]] },
     },
 }
@@ -128,31 +90,39 @@ local ProfileUI                                     = A.Data.ProfileUI[2]
 ProfileUI[#ProfileUI + 1]                           = {
     {
         E             = "Checkbox",
-        DB            = "AoE",
+        DB            = "Interrupt-Kick",
+        DBV           = true,
+        L             = L.KICK,
+        TT            = L.KICKTT,
+        M             = {},
+    },
+    {
+        E             = "Checkbox",
+        DB            = "UseBackstab",
         DBV           = false,
-        L             = L.AOE,
-        TT            = L.AOETT,
+        L             = L.BACKSTAB,
+        TT            = L.BACKSTABTT,
         M             = {},
     },
     {
         E             = "Checkbox",
-        DB            = "StopCast",
-        DBV           = true,
-        L             = L.STOPCAST,
-        TT            = L.STOPCASTTT,
+        DB            = "UseCloak-Auto",
+        DBV           = false,
+        L             = L.CLOAK,
+        TT            = L.CLOAKTT,
         M             = {},
     },
     {
         E             = "Checkbox",
-        DB            = "Interrupt-ShieldBash",
-        DBV           = true,
-        L             = L.KICK_SHIELDBASH,
-        TT            = L.KICK_SHIELDBASHTT,
+        DB            = "Opener-Garrote",
+        DBV           = false,
+        L             = L.OPENER_GARROTE,
+        TT            = L.OPENER_GARROTETT,
         M             = {},
     },
 }
 
--- [[ Rotation ]]
+-- [[ Cycle ]]
 ProfileUI[#ProfileUI + 1]                           = {
     {
         E             = "Header",
@@ -162,91 +132,79 @@ ProfileUI[#ProfileUI + 1]                           = {
 ProfileUI[#ProfileUI + 1]                           = {
     {
         E             = "Checkbox",
-        DB            = "ZerkerDPS",
-        DBV           = false,
-        L             = L.ZERKERDPS,
-        TT            = L.ZERKERDPSTT,
-        M             = {},
-    },
-    {
-        E             = "Checkbox",
-        DB            = "ShieldBlock",
+        DB            = "UseRupture",
         DBV           = true,
-        L             = L.SHIELDBLOCK,
-        TT            = L.SHIELDBLOCKTT,
+        L             = L.RUPTURE,
+        TT            = L.RUPTURETT,
         M             = {},
     },
     {
         E             = "Checkbox",
-        DB            = "MaintainThunderClap",
+        DB            = "UseEviscerate",
         DBV           = true,
-        L             = L.THUNDERCLAP,
-        TT            = L.THUNDERCLAPTT,
+        L             = L.EVISCERATE,
+        TT            = L.EVISCERATETT,
         M             = {},
     },
     {
         E             = "Checkbox",
-        DB            = "MaintainDemoShout",
-        DBV           = false,
-        L             = L.DEMOSHOUT,
-        TT            = L.DEMOSHOUTTT,
+        DB            = "UseExposeArmor",
+        DBV           = true,
+        L             = L.EXPOSEARMOR,
+        TT            = L.EXPOSEARMORTT,
+        M             = {},
+    },
+}
+
+-- [[ Cooldowns ]]
+ProfileUI[#ProfileUI + 1]                           = {
+    {
+        E             = "Header",
+        L             = L.BURST_HEADER,
+    },
+}
+ProfileUI[#ProfileUI + 1]                           = {
+    {
+        E             = "Checkbox",
+        DB            = "UseBladeFlurry",
+        DBV           = true,
+        L             = L.BLADEFLURRY,
+        TT            = L.BLADEFLURRYTT,
+        M             = {},
+    },
+    {
+        E             = "Checkbox",
+        DB            = "UseAdrenalineRush",
+        DBV           = true,
+        L             = L.ADRENALINERUSH,
+        TT            = L.ADRENALINERUSHTT,
+        M             = {},
+    },
+    {
+        E             = "Checkbox",
+        DB            = "UseThistleTea",
+        DBV           = true,
+        L             = L.THISTLETEA,
+        TT            = L.THISTLETEATT,
+        M             = {},
+    },
+    {
+        E             = "Checkbox",
+        DB            = "UseSappers",
+        DBV           = true,
+        L             = L.SAPPERS,
+        TT            = L.SAPPERSTT,
         M             = {},
     },
 }
 ProfileUI[#ProfileUI + 1]                           = {
     RowOptions = { margin = { top = 5 } },
     {
-        E             = "Slider",
-        MIN           = 30,
-        MAX           = 100,
-        DB            = "HeroicStrike-PWR",
-        DBV           = 40,
-        L             = L.HEROICSTRIKE_PWR,
-        TT            = L.HEROICSTRIKE_PWRTT,
-        M             = {},
-    },
-    {
-        E             = "Slider",
-        MIN           = 20,
-        MAX           = 100,
-        DB            = "Cleave-PWR",
-        DBV           = 50,
-        L             = L.CLEAVE_PWR,
-        TT            = L.CLEAVE_PWRTT,
-        M             = {},
-    },
-    {
-        E             = "Slider",
-        MIN           = 0,
-        MAX           = 100,
-        DB            = "Bloodrage-LimitHP",
-        DBV           = 35,
-        L             = L.BLOODRAGE_LIMITHP,
-        TT            = L.BLOODRAGE_LIMITHPTT,
-        M             = {},
-    },
-}
-ProfileUI[#ProfileUI + 1]                           = {
-    RowOptions = { margin = { top = 5 } },
-    {
-        E             = "Dropdown",
-        OT            = {
-            { text = (WR.CommandingShout:Info()),  value = "CommandingShout" },
-            { text = (WR.BattleShout:Info()),      value = "BattleShout" },
-            { text = "OFF",                        value = "OFF" },
-        },
-        DB            = "ShoutToUse",
-        DBV           = "CommandingShout",
-        L             = L.SHOUT,
-        TT            = L.SHOUTTT,
-        M             = {},
-    },
-    {
         E             = "Checkbox",
-        DB            = "MightyRagePotion",
-        DBV           = false,
-        L             = L.MIGHTYRAGEPOTION,
-        TT            = L.MIGHTYRAGEPOTIONTT,
+        DB            = "HastePotion",
+        DBV           = true,
+        L             = L.HASTEPOTION,
+        TT            = L.HASTEPOTIONTT,
         M             = {},
     },
     {
@@ -266,90 +224,11 @@ ProfileUI[#ProfileUI + 1]                           = {
         M             = {},
     },
 }
-ProfileUI[#ProfileUI + 1]                           = {
-    RowOptions = { margin = { top = 5 } },
-    {
-        E             = "Checkbox",
-        DB            = "HastePotion",
-        DBV           = true,
-        L             = L.HASTEPOTION,
-        TT            = L.HASTEPOTIONTT,
-        M             = {},
-    },
-    {
-        E             = "Checkbox",
-        DB            = "SuperSapperCharge",
-        DBV           = false,
-        L             = L.SAPPER,
-        TT            = L.SAPPERTT,
-        M             = {},
-    },
-    {
-        E             = "Checkbox",
-        DB            = "BerserkerRage-Dance",
-        DBV           = false,
-        L             = L.BRDANCE,
-        TT            = L.BRDANCETT,
-        M             = {},
-    },
-}
-
--- [[ Defense ]]
-ProfileUI[#ProfileUI + 1]                           = {
-    {
-        E             = "Header",
-        L             = L.DEFENSE_HEADER,
-    },
-}
-ProfileUI[#ProfileUI + 1]                           = {
-    {
-        E             = "Checkbox",
-        DB            = "UseShieldWall",
-        DBV           = false,
-        L             = L.USE_SHIELDWALL,
-        TT            = L.USE_SHIELDWALLTT,
-        M             = {},
-    },
-    {
-        E             = "Slider",
-        MIN           = 0,
-        MAX           = 100,
-        DB            = "ShieldWallHP",
-        DBV           = 25,
-        L             = L.SHIELDWALL_HP,
-        TT            = L.DEFENSE_TT,
-        M             = {},
-    },
-}
-ProfileUI[#ProfileUI + 1]                           = {
-    {
-        E             = "Checkbox",
-        DB            = "UseLastStand",
-        DBV           = false,
-        L             = L.USE_LASTSTAND,
-        TT            = L.USE_LASTSTANDTT,
-        M             = {},
-    },
-    {
-        E             = "Slider",
-        MIN           = 0,
-        MAX           = 100,
-        DB            = "LastStandHP",
-        DBV           = 35,
-        L             = L.LASTSTAND_HP,
-        TT            = L.DEFENSE_TT,
-        M             = {},
-    },
-}
 
 --------------------------------------------------------------------------
 -- [[ BARRE DE TOGGLES A L'ECRAN ]]
--- Boutons cliquables avec le skin (icone) de chaque sort :
---   - icone en couleur + lisere dore  = AUTO ACTIVE
---   - icone grisee                    = DESACTIVE (controle manuel)
---   - clic gauche : bascule le toggle correspondant
---   - Shift + glisser : deplace la barre (position sauvegardee)
---   - /gglbar : affiche / masque la barre
+-- Icone en couleur + lisere = ACTIVE | grisee = OFF | clic = bascule
+-- Shift + glisser : deplacer | /stormbar : masquer
 --------------------------------------------------------------------------
 do
     local TMW             = _G.TMW
@@ -357,25 +236,24 @@ do
     local UIParent                = _G.UIParent
     local GameTooltip             = _G.GameTooltip
     local GetSpellInfo            = _G.GetSpellInfo
+    local GetItemIcon             = _G.GetItemIcon
     local GetInventoryItemTexture = _G.GetInventoryItemTexture
     local IsShiftKeyDown          = _G.IsShiftKeyDown
     local GetToggle               = A.GetToggle
     local SetToggle               = A.SetToggle
 
-    -- Toggles exposes sur la barre (ordre d'affichage).
-    -- Ajouter/retirer une ligne suffit pour changer la barre.
-    -- spell = icone du sort | slot = icone de l'objet equipe (13/14 = trinkets)
     local BUTTONS = {
-        { key = "ZerkerDPS",            spell = WR.BerserkerStance,   default = false },
-        { key = "ShieldBlock",          spell = WR.ShieldBlock,       default = true  },
-        { key = "MaintainThunderClap",  spell = WR.ThunderClap,       default = true  },
-        { key = "MaintainDemoShout",    spell = WR.DemoralizingShout, default = false },
-        { key = "Interrupt-ShieldBash", spell = WR.ShieldBash,        default = true  },
-        { key = "AoE",                  spell = WR.Cleave,            default = false },
-        { key = "UseTrinket1",          slot  = 13, label = "Trinket 1", default = true },
-        { key = "UseTrinket2",          slot  = 14, label = "Trinket 2", default = true },
-        { key = "UseShieldWall",        spell = WR.ShieldWall,        default = false },
-        { key = "UseLastStand",         spell = WR.LastStand,         default = false },
+        { key = "Interrupt-Kick",    spell = RO.Kick,           default = true  },
+        { key = "UseRupture",        spell = RO.Rupture,        default = true  },
+        { key = "UseEviscerate",     spell = RO.Eviscerate,     default = true  },
+        { key = "UseExposeArmor",    spell = RO.ExposeArmor,    default = true  },
+        { key = "UseSappers",        item  = 23827, label = "Sappers",      default = true },
+        { key = "UseBladeFlurry",    spell = RO.BladeFlurry,    default = true  },
+        { key = "UseAdrenalineRush", spell = RO.AdrenalineRush, default = true  },
+        { key = "UseThistleTea",     item  = 7676,  label = "Thistle Tea",  default = true },
+        { key = "HastePotion",       item  = 22838, label = "Haste Potion", default = true },
+        { key = "UseTrinket1",       slot  = 13, label = "Trinket 1", default = true },
+        { key = "UseTrinket2",       slot  = 14, label = "Trinket 2", default = true },
     }
 
 
@@ -409,9 +287,9 @@ do
         return value and true or false
     end
 
-    local bar = _G.GGLProtToggleBar
+    local bar = _G.StormRogueToggleBar
     if not bar then
-        bar = CreateFrame("Frame", "GGLProtToggleBar", UIParent)
+        bar = CreateFrame("Frame", "StormRogueToggleBar", UIParent)
         bar:SetWidth(PAD * 2 + #BUTTONS * SIZE + (#BUTTONS - 1) * GAP)
         bar:SetHeight(PAD * 2 + SIZE)
         bar:SetPoint("CENTER", UIParent, "CENTER", 0, -220)
@@ -445,7 +323,7 @@ do
 
         for i = 1, #BUTTONS do
             local entry = BUTTONS[i]
-            local btn = CreateFrame("Button", "GGLProtToggleButton" .. i, bar)
+            local btn = CreateFrame("Button", "StormRogueToggleButton" .. i, bar)
             btn:SetWidth(SIZE)
             btn:SetHeight(SIZE)
             btn:SetPoint("LEFT", bar, "LEFT", PAD + (i - 1) * (SIZE + GAP), 0)
@@ -455,15 +333,16 @@ do
             local tex
             if entry.slot then
                 tex = GetInventoryItemTexture("player", entry.slot)
+            elseif entry.item and GetItemIcon then
+                tex = GetItemIcon(entry.item)
             elseif entry.spell then
                 local _, _, spellIcon = GetSpellInfo(entry.spell.ID)
                 tex = spellIcon
             end
             icon:SetTexture(tex or "Interface\\Icons\\INV_Misc_QuestionMark")
-            icon:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- coupe le bord moche
+            icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
             btn.icon = icon
 
-            -- lisere dore "actif" (le glow des boutons d'action Blizzard)
             local border = btn:CreateTexture(nil, "OVERLAY")
             border:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
             border:SetBlendMode("ADD")
@@ -492,9 +371,9 @@ do
                 GameTooltip:SetOwner(btn, "ANCHOR_TOP")
                 GameTooltip:AddLine(entry.label or (entry.spell and entry.spell:Info()) or entry.key)
                 if GetState(entry) then
-                    GameTooltip:AddLine("AUTO : |cff00ff00ACTIVE|r - clic pour desactiver", 1, 1, 1)
+                    GameTooltip:AddLine("|cff00ff00ACTIVE|r - clic pour desactiver", 1, 1, 1)
                 else
-                    GameTooltip:AddLine("AUTO : |cffff2020DESACTIVE|r - clic pour activer", 1, 1, 1)
+                    GameTooltip:AddLine("|cffff2020DESACTIVE|r - clic pour activer", 1, 1, 1)
                 end
                 GameTooltip:AddLine("Shift + glisser : deplacer la barre", 0.6, 0.6, 0.6)
                 GameTooltip:Show()
@@ -506,8 +385,6 @@ do
             bar.buttons[i] = btn
         end
 
-        -- rafraichissement visuel (suit aussi les changements via /action
-        -- ou macros SetToggle)
         local elapsedSince = 0
         bar:SetScript("OnUpdate", function(self, elapsed)
             elapsedSince = elapsedSince + (elapsed or _G.arg1 or 0.02)
@@ -516,7 +393,6 @@ do
             SeedDefaults()
             for j = 1, #bar.buttons do
                 local b = bar.buttons[j]
-                -- icone dynamique des trinkets (suit les swaps d'equipement)
                 if b.entry.slot then
                     local t = GetInventoryItemTexture("player", b.entry.slot)
                     if t then
@@ -533,8 +409,8 @@ do
             end
         end)
 
-        _G.SLASH_GGLBAR1 = "/gglbar"
-        _G.SlashCmdList["GGLBAR"] = function()
+        _G.SLASH_STORMBAR1 = "/stormbar"
+        _G.SlashCmdList["STORMBAR"] = function()
             if bar:IsShown() then
                 bar:Hide()
             else
@@ -547,54 +423,36 @@ end
 
 -- Configuration du panneau overlay
 local GGL_ColorHex = "|cffe8c15c"
-local GGL_PANEL_TITLE = "GGL — WARRIOR PROT"
+local GGL_PANEL_TITLE = "STORM — ROGUE COMBAT"
 local GGL_PANEL_SECTIONS = {
-    { title = "ROTATION", items = {
-        { type = "check", key = "ZerkerDPS", label = "Mode Zerker DPS (top logs)", default = false, tooltip = "Berserker Stance quand vous ne tankez pas" },
-        { type = "check", key = "UseShieldSlam", label = "Shield Slam (on cooldown)", default = true, tooltip = "" },
-        { type = "check", key = "UseRevenge", label = "Revenge (sur proc)", default = true, tooltip = "" },
-        { type = "check", key = "UseDevastate", label = "Devastate / Sunder (filler)", default = true, tooltip = "" },
-        { type = "check", key = "UseHeroicStrike", label = "Heroic Strike (vidange)", default = true, tooltip = "" },
-        { type = "check", key = "UseCleave", label = "Cleave (mode AoE)", default = true, tooltip = "" },
-        { type = "check", key = "UseWhirlwind", label = "Zerker : Whirlwind", default = true, tooltip = "" },
-        { type = "check", key = "UseBerserkerRage", label = "Zerker : Berserker Rage", default = true, tooltip = "" },
-        { type = "check", key = "UseRecklessness", label = "Zerker : Recklessness (burst)", default = true, tooltip = "" },
-        { type = "check", key = "UseIntercept", label = "Zerker : Intercept", default = true, tooltip = "" },
-        { type = "check", key = "ShieldBlock", label = "Shield Block on cooldown", default = true, tooltip = "Anti-crush + procs Revenge" },
-        { type = "check", key = "MaintainThunderClap", label = "Thunder Clap (maintien)", default = true, tooltip = "OFF si un autre guerrier l'applique" },
-        { type = "check", key = "MaintainDemoShout", label = "Demoralizing Shout (maintien)", default = false, tooltip = "Coute un GCD" },
-        { type = "check", key = "Interrupt-ShieldBash", label = "Shield Bash (kick auto)", default = true, tooltip = "" },
-        { type = "check", key = "AoE", label = "Mode AoE (Cleave)", default = false, tooltip = "" },
-        { type = "check", key = "StopCast", label = "Stop cast HS/Cleave", default = true, tooltip = "" },
+    { title = "CYCLE (SnD + Expose Armor)", items = {
+        { type = "check", key = "UseSnD", label = "Slice and Dice (upkeep)", default = true, tooltip = "LA stat du parse — a ne couper que pour du 100% manuel" },
+        { type = "check", key = "UseExposeArmor", label = "Expose Armor (double uptime)", default = true, tooltip = "Le cycle des top logs" },
+        { type = "check", key = "UseRupture", label = "Rupture 5 CP", default = true, tooltip = "Seulement quand SnD et EA sont larges" },
+        { type = "check", key = "UseEviscerate", label = "Eviscerate 5 CP (dump)", default = true, tooltip = "" },
+        { type = "check", key = "Opener-Garrote", label = "Opener Garrote (stealth)", default = false, tooltip = "OFF = Sinister Strike direct (top logs)" },
+        { type = "check", key = "UseBackstab", label = "Backstab (build dague)", default = false, tooltip = "Positionnel !" },
     } },
-    { title = "BURST", items = {
+    { title = "COOLDOWNS & CONSOS", items = {
+        { type = "check", key = "UseBladeFlurry", label = "Blade Flurry on cooldown", default = true, tooltip = "" },
+        { type = "check", key = "UseAdrenalineRush", label = "Adrenaline Rush (avec BF)", default = true, tooltip = "" },
+        { type = "check", key = "UseThistleTea", label = "Thistle Tea (energie < 25)", default = true, tooltip = "" },
+        { type = "check", key = "HastePotion", label = "Haste Potion (boss)", default = true, tooltip = "" },
+        { type = "check", key = "UseSappers", label = "Sappers (boss)", default = true, tooltip = "Ingenierie requise" },
         { type = "check", key = "UseTrinket1", label = "Trinket 1 (slot haut)", default = true, tooltip = "" },
         { type = "check", key = "UseTrinket2", label = "Trinket 2 (slot bas)", default = true, tooltip = "" },
-        { type = "check", key = "HastePotion", label = "Haste Potion (boss)", default = true, tooltip = "" },
-        { type = "check", key = "SuperSapperCharge", label = "Super Sapper (AoE 3+)", default = false, tooltip = "Ingenierie requise" },
-        { type = "check", key = "MightyRagePotion", label = "Mighty Rage Potion", default = false, tooltip = "Si rage < 25 en burst" },
-        { type = "check", key = "BerserkerRage-Dance", label = "Berserker Rage dance (rage)", default = false, tooltip = "Risque en tanking actif" },
-        { type = "check", key = "UseBloodrage", label = "Bloodrage (on cooldown)", default = true, tooltip = "" },
         { type = "check", key = "UseRacials", label = "Racials (Berserking/Blood Fury)", default = true, tooltip = "" },
     } },
-    { title = "REGLAGES", items = {
-        { type = "cycle", key = "ShoutToUse", label = "Cri utilise", default = "CommandingShout", options = { { text = "Command.", value = "CommandingShout", width = 64 }, { text = "Battle", value = "BattleShout", width = 48 }, { text = "OFF", value = "OFF", width = 36 } }, tooltip = "Commanding = PV max, Battle = AP" },
-        { type = "slider", key = "HeroicStrike-PWR", label = "Heroic Strike >= rage", min = 30, max = 100, default = 40, suffix = "", tooltip = "Seuil de vidange" },
-        { type = "slider", key = "Cleave-PWR", label = "Cleave >= rage", min = 20, max = 100, default = 50, suffix = "", tooltip = "" },
-        { type = "slider", key = "Bloodrage-LimitHP", label = "Bloodrage >= PV", min = 0, max = 100, default = 35, suffix = "%", tooltip = "" },
-    } },
-    { title = "DEFENSE (manuel par defaut)", items = {
-        { type = "check", key = "UseShieldWall", label = "Shield Wall auto", default = false, tooltip = "OFF = controle manuel" },
-        { type = "slider", key = "ShieldWallHP", label = "Shield Wall <= PV", min = 0, max = 100, default = 25, suffix = "%", tooltip = "" },
-        { type = "check", key = "UseLastStand", label = "Last Stand auto", default = false, tooltip = "OFF = controle manuel" },
-        { type = "slider", key = "LastStandHP", label = "Last Stand <= PV", min = 0, max = 100, default = 35, suffix = "%", tooltip = "" },
+    { title = "DIVERS", items = {
+        { type = "check", key = "Interrupt-Kick", label = "Kick (auto)", default = true, tooltip = "" },
+        { type = "check", key = "UseCloak-Auto", label = "Cloak of Shadows auto (<= 35% PV)", default = false, tooltip = "" },
     } },
 }
 
 --------------------------------------------------------------------------
--- [[ OVERLAY "GGL ROTATIONS" ]] v2 — design Rome antique
+-- [[ OVERLAY "STORM ROTATIONS" ]] v2 — design Rome antique
 -- Marbre sombre + bordures or (opaque, lisible), bouton minimap.
--- /ggaa ou /gglui : afficher/masquer | glisser la barre de titre
+-- /storm ou /ggaa : afficher/masquer | glisser la barre de titre
 -- Molette : scroll | Synchronise avec /action, la barre et les macros
 --------------------------------------------------------------------------
 do
@@ -606,7 +464,7 @@ do
     local GetToggle       = A.GetToggle
     local math            = _G.math
 
-    local PANEL_NAME      = "GGLPanel" .. (A.PlayerClass or "X")
+    local PANEL_NAME      = "StormPanel" .. (A.PlayerClass or "X")
     if _G[PANEL_NAME] then return end
 
     -- Palette "Rome antique" : marbre sombre, or, bronze, ivoire
@@ -957,7 +815,7 @@ do
         mmBtn:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
         local function UpdatePosition()
-            local angle = DBGet("GGL-MinimapPos", 210)
+            local angle = DBGet("Storm-MinimapPos", 210)
             if type(angle) ~= "number" then angle = 210 end
             local rad = math.rad(angle)
             mmBtn:SetPoint("CENTER", Minimap, "CENTER", 80 * math.cos(rad), 80 * math.sin(rad))
@@ -975,7 +833,7 @@ do
             cx = cx / scale
             cy = cy / scale
             local angle = math.deg(math.atan2(cy - my, cx - mx))
-            DBSet("GGL-MinimapPos", angle)
+            DBSet("Storm-MinimapPos", angle)
             UpdatePosition()
         end)
         mmBtn:SetScript("OnClick", function()
@@ -990,9 +848,9 @@ do
         mmBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
     end
 
-    _G.SLASH_GGLUI1 = "/gglui"
-    _G.SLASH_GGLUI2 = "/ggaa"
-    _G.SlashCmdList["GGLUI"] = function()
+    _G.SLASH_STORMUI1 = "/storm"
+    _G.SLASH_STORMUI2 = "/ggaa"
+    _G.SlashCmdList["STORMUI"] = function()
         if panel:IsShown() then panel:Hide() else panel:Show() end
     end
 end

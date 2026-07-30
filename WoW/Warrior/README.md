@@ -5,8 +5,8 @@ Rotations guerrier pour WoW TBC au format GGL (TellMeWhen + framework
 
 | Fichier | Rôle |
 |---------|------|
-| `GGL_Action_Warrior_TBC_PvP.lua` | **Profil PvP** — rotation (snippet Order 1) |
-| `GGL_Action_Warrior_TBC_PvP_UI.lua` | **Profil PvP** — UI in-game `/action` (snippet Order 2) |
+| `Storm_Warrior_TBC_PvP.lua` | **Profil PvP** — rotation (snippet Order 1) |
+| `Storm_Warrior_TBC_PvP_UI.lua` | **Profil PvP** — UI in-game `/action` (snippet Order 2) |
 | `GGL_Action_Warrior_TBC_Fury.lua` | Profil PvE Fury dégâts max (snippet unique) |
 | `FuryWarrior_TBC.lua` | Version Lua autonome (sans TMW/Action) |
 
@@ -79,8 +79,8 @@ Techniques « pro » sur les interrupts :
 1. Dans TellMeWhen, dupliquer un profil `[GGL]` existant (pour récupérer
    les groupes d'icônes) ou créer un profil vide.
 2. `/tmw` → **Profile** → **Code Snippets** :
-   - Snippet 1 (« Warrior », **Order 1**) : coller `GGL_Action_Warrior_TBC_PvP.lua`
-   - Snippet 2 (« Profile UI », **Order 2**) : coller `GGL_Action_Warrior_TBC_PvP_UI.lua`
+   - Snippet 1 (« Warrior », **Order 1**) : coller `Storm_Warrior_TBC_PvP.lua`
+   - Snippet 2 (« Profile UI », **Order 2**) : coller `Storm_Warrior_TBC_PvP_UI.lua`
 3. `/reload`, puis `/action` pour ouvrir le panneau de réglages.
 
 ## UI in-game : activer/désactiver des sorts à la volée
