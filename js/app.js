@@ -43,5 +43,12 @@
       tab.addEventListener("click", function () { activerOnglet(tab.dataset.tab); });
     });
     document.getElementById("theme-toggle").addEventListener("click", basculerTheme);
+
+    // PWA : le service worker rend l'app installable et utilisable hors-ligne.
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      navigator.serviceWorker.register("sw.js").catch(function () {
+        /* hors HTTPS (ou navigateur ancien) : l'app fonctionne sans installation */
+      });
+    }
   });
 })();
