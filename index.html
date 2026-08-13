@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImmoPoppy — Studio d'investissement immobilier</title>
+  <meta name="description" content="Calculs de rentabilité locative, prix immobiliers sur zone et création d'ambiances déco par style.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-icon">🏠</span>
+        <div>
+          <h1>ImmoPoppy</h1>
+          <p class="brand-sub">Studio d'investissement immobilier</p>
+        </div>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Sections de l'application">
+        <button class="tab is-active" role="tab" aria-selected="true" data-tab="renta">📊 Rentabilité</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="prix">📍 Prix sur zone</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="ambiances">🎨 Ambiances</button>
+      </nav>
+      <button id="theme-toggle" class="theme-toggle" title="Basculer clair / sombre" aria-label="Basculer le thème clair ou sombre">🌓</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============================ RENTABILITÉ ============================ -->
+    <section id="panel-renta" class="panel is-active" role="tabpanel">
+      <div class="panel-grid">
+        <div class="card form-card">
+          <h2>Le bien</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Prix d'achat (€)</span>
+              <input type="number" id="in-prix" value="150000" min="0" step="1000">
+            </label>
+            <label class="field">
+              <span>Surface (m²)</span>
+              <input type="number" id="in-surface" value="45" min="1" step="1">
+            </label>
+            <label class="field">
+              <span>Type de bien</span>
+              <select id="in-neuf">
+                <option value="ancien" selected>Ancien (notaire ≈ 7,5 %)</option>
+                <option value="neuf">Neuf (notaire ≈ 2,5 %)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Frais de notaire (€)</span>
+              <input type="number" id="in-notaire" value="11250" min="0" step="100">
+            </label>
+            <label class="field">
+              <span>Travaux (€)</span>
+              <input type="number" id="in-travaux" value="10000" min="0" step="500">
+            </label>
+            <label class="field">
+              <span>Mobilier (€)</span>
+              <input type="number" id="in-mobilier" value="0" min="0" step="500">
+            </label>
+          </div>
+
+          <h2>Les revenus</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Loyer mensuel hors charges (€)</span>
+              <input type="number" id="in-loyer" value="750" min="0" step="10">
+            </label>
+            <label class="field">
+              <span>Vacance locative (semaines / an)</span>
+              <input type="number" id="in-vacance" value="2" min="0" max="52" step="1">
+            </label>
+          </div>
+
+          <h2>Les charges annuelles</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Charges copropriété non récupérables (€)</span>
+              <input type="number" id="in-copro" value="800" min="0" step="50">
+            </label>
+            <label class="field">
+              <span>Taxe foncière (€)</span>
+              <input type="number" id="in-tf" value="900" min="0" step="50">
+            </label>
+            <label class="field">
+              <span>Assurance PNO (€)</span>
+              <input type="number" id="in-pno" value="150" min="0" step="10">
+            </label>
+            <label class="field">
+              <span>Entretien / provisions (€)</span>
+              <input type="number" id="in-entretien" value="500" min="0" step="50">
+            </label>
+            <label class="field">
+              <span>Gestion locative (% du loyer)</span>
+              <input type="number" id="in-gestion" value="0" min="0" max="15" step="0.5">
+            </label>
+            <label class="field">
+              <span>Garantie loyers impayés (% du loyer)</span>
+              <input type="number" id="in-gli" value="0" min="0" max="6" step="0.1">
+            </label>
+          </div>
+
+          <h2>Le financement</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Apport (€)</span>
+              <input type="number" id="in-apport" value="20000" min="0" step="1000">
+            </label>
+            <label class="field">
+              <span>Taux du crédit (% / an)</span>
+              <input type="number" id="in-taux" value="3.5" min="0" max="15" step="0.05">
+            </label>
+            <label class="field">
+              <span>Durée (années)</span>
+              <input type="number" id="in-duree" value="20" min="1" max="30" step="1">
+            </label>
+            <label class="field">
+              <span>Assurance emprunteur (% / an)</span>
+              <input type="number" id="in-assu" value="0.30" min="0" max="2" step="0.05">
+            </label>
+          </div>
+
+          <h2>La fiscalité</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Régime fiscal</span>
+              <select id="in-regime">
+                <option value="micro-foncier">Location nue — micro-foncier (abattement 30 %)</option>
+                <option value="foncier-reel">Location nue — frais réels</option>
+                <option value="micro-bic" selected>LMNP — micro-BIC (abattement 50 %)</option>
+                <option value="lmnp-reel">LMNP — réel avec amortissement (≈ 0 € d'impôt)</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Tranche marginale d'imposition (%)</span>
+              <select id="in-tmi">
+                <option value="0">0 %</option>
+                <option value="11">11 %</option>
+                <option value="30" selected>30 %</option>
+                <option value="41">41 %</option>
+                <option value="45">45 %</option>
+              </select>
+            </label>
+          </div>
+          <p class="hint">Prélèvements sociaux de 17,2 % inclus automatiquement dans le calcul de l'impôt.</p>
+        </div>
+
+        <div class="results-col">
+          <div class="stat-row" id="stat-row">
+            <div class="stat-tile">
+              <span class="stat-label">Rentabilité brute</span>
+              <span class="stat-value" id="out-brute">—</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label">Rentabilité nette de charges</span>
+              <span class="stat-value" id="out-nette">—</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label">Rentabilité nette-nette (après impôts)</span>
+              <span class="stat-value" id="out-nettenette">—</span>
+            </div>
+            <div class="stat-tile">
+              <span class="stat-label">Cash-flow mensuel</span>
+              <span class="stat-value" id="out-cashflow">—</span>
+              <span class="stat-delta" id="out-cashflow-note"></span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Synthèse de l'opération</h2>
+            <table class="synth-table">
+              <tbody>
+                <tr><td>Coût total de l'opération</td><td id="out-cout">—</td></tr>
+                <tr><td>Prix au m² (hors frais)</td><td id="out-prixm2">—</td></tr>
+                <tr><td>Montant emprunté</td><td id="out-emprunt">—</td></tr>
+                <tr><td>Mensualité (assurance incluse)</td><td id="out-mensualite">—</td></tr>
+                <tr><td>Loyer annuel (vacance déduite)</td><td id="out-loyerannuel">—</td></tr>
+                <tr><td>Charges annuelles</td><td id="out-charges">—</td></tr>
+                <tr><td>Impôts + prélèvements sociaux (an 1, estimation)</td><td id="out-impots">—</td></tr>
+                <tr><td>Effort d'épargne annuel</td><td id="out-effort">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <h2>Projection sur la durée du prêt</h2>
+            <div id="chart-projection" class="chart-host" aria-label="Graphique de projection : capital restant dû et cash-flow cumulé par année"></div>
+            <p class="hint">Hypothèses constantes (loyer, charges, fiscalité). Le cash-flow cumulé n'intègre pas la revalorisation du bien ni l'indexation des loyers.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ PRIX SUR ZONE ============================ -->
+    <section id="panel-prix" class="panel" role="tabpanel" hidden>
+      <div class="card search-card">
+        <h2>Rechercher une commune</h2>
+        <div class="search-row">
+          <input type="search" id="commune-input" placeholder="Ex. : Lyon, Bordeaux, Saint-Malo…" autocomplete="off" aria-label="Nom de la commune">
+          <div id="commune-suggestions" class="suggestions" hidden></div>
+        </div>
+        <p class="hint">La recherche interroge l'API officielle <code>geo.api.gouv.fr</code>. Les ventes réelles proviennent de la base « Demandes de valeurs foncières » (DVF) quand elle est joignable ; sinon, des prix indicatifs par département sont affichés.</p>
+      </div>
+
+      <div id="prix-resultats" hidden>
+        <div class="stat-row">
+          <div class="stat-tile">
+            <span class="stat-label" id="prix-appart-label">Appartement — prix médian</span>
+            <span class="stat-value" id="prix-appart">—</span>
+            <span class="stat-delta" id="prix-appart-src"></span>
+          </div>
+          <div class="stat-tile">
+            <span class="stat-label" id="prix-maison-label">Maison — prix médian</span>
+            <span class="stat-value" id="prix-maison">—</span>
+            <span class="stat-delta" id="prix-maison-src"></span>
+          </div>
+          <div class="stat-tile">
+            <span class="stat-label">Commune</span>
+            <span class="stat-value stat-value-sm" id="prix-commune">—</span>
+            <span class="stat-delta" id="prix-population"></span>
+          </div>
+        </div>
+
+        <div class="panel-grid-2">
+          <div class="card">
+            <h2 id="prix-chart-titre">Ventes récentes</h2>
+            <div id="chart-prix" class="chart-host"></div>
+            <p class="hint" id="prix-chart-note"></p>
+          </div>
+          <div class="card">
+            <h2>Dernières transactions (DVF)</h2>
+            <div class="table-scroll">
+              <table class="data-table" id="dvf-table">
+                <thead>
+                  <tr><th>Date</th><th>Type</th><th>Surface</th><th>Prix</th><th>€ / m²</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <p class="hint" id="dvf-note"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Repères nationaux — grandes villes (€ / m², appartement, indicatif)</h2>
+        <div id="chart-villes" class="chart-host chart-host-tall"></div>
+        <p class="hint">Ordres de grandeur indicatifs (2025) destinés à situer une zone, pas à estimer un bien précis.</p>
+      </div>
+    </section>
+
+    <!-- ============================ AMBIANCES ============================ -->
+    <section id="panel-ambiances" class="panel" role="tabpanel" hidden>
+      <div class="card">
+        <h2>Explorer par tags</h2>
+        <p class="hint">Filtre les ambiances à la manière des tags Pinterest — clique pour combiner.</p>
+        <div id="tag-cloud" class="tag-cloud"></div>
+      </div>
+
+      <div id="ambiance-grid" class="ambiance-grid"></div>
+
+      <div class="card" id="creator-card">
+        <h2>✨ Créer mon ambiance</h2>
+        <div class="field-grid">
+          <label class="field">
+            <span>Nom de l'ambiance</span>
+            <input type="text" id="amb-nom" placeholder="Ex. : Cocon d'hiver" maxlength="40">
+          </label>
+          <label class="field">
+            <span>Style de départ (pré-remplit palette et tags)</span>
+            <select id="amb-base"></select>
+          </label>
+        </div>
+        <label class="field">
+          <span>Description</span>
+          <input type="text" id="amb-desc" placeholder="L'esprit de la pièce en une phrase…" maxlength="140">
+        </label>
+        <div class="field">
+          <span class="field-label">Palette (5 couleurs)</span>
+          <div id="amb-colors" class="color-pickers"></div>
+        </div>
+        <div class="field">
+          <span class="field-label">Tags</span>
+          <div id="amb-tags" class="tag-cloud tag-cloud-select"></div>
+        </div>
+        <div class="creator-actions">
+          <button id="amb-save" class="btn btn-primary">Enregistrer l'ambiance</button>
+          <span class="hint" id="amb-feedback"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>ImmoPoppy — outil d'aide à la décision. Les résultats sont des estimations et ne constituent pas un conseil financier, fiscal ou immobilier.</p>
+  </footer>
+
+  <script src="js/data-prix.js"></script>
+  <script src="js/data-ambiances.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/prix.js"></script>
+  <script src="js/ambiances.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
