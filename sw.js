@@ -1,10 +1,10 @@
 /*
- * Service worker ImmoPoppy : met l'app en cache pour un usage hors-ligne.
+ * Service worker SECAAimmo : met l'app en cache pour un usage hors-ligne.
  * - Fichiers de l'app : cache d'abord (mise à jour en arrière-plan).
  * - APIs externes (geo.api.gouv.fr, DVF) : réseau uniquement — jamais mises en
  *   cache, l'app a déjà son propre repli sur les données embarquées.
  */
-const CACHE = "immopoppy-v1";
+const CACHE = "secaaimmo-v2";
 
 const SHELL = [
   "./",

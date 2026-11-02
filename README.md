@@ -1,4 +1,4 @@
-# 🏠 ImmoPoppy — Studio d'investissement immobilier
+# 🏠 SECAAimmo — Studio d'investissement immobilier
 
 Application web autonome (HTML / CSS / JavaScript pur, aucune installation) qui réunit trois outils :
 
