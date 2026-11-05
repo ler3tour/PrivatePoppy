@@ -131,6 +131,7 @@
       "<h2>Fiscalité (estimation, année 1)</h2><table>" +
       ligne("Régime", regimeLabel) +
       ligne("Tranche marginale d'imposition", (f.tmi * 100).toLocaleString("fr-FR") + " %") +
+      (r.regimeAmorti ? ligne("Amortissement annuel estimé (bâti 85 % du prix sur 30 ans, travaux sur 15 ans, mobilier sur 7 ans)", fmtEur(r.amortissement) + " / an") : "") +
       ligne("Impôts + prélèvements sociaux", fmtEur(r.impots)) +
       ligne("Effort d'épargne annuel", r.cashflowMensuel >= 0 ? "0 €" : fmtEur(-r.cashflowMensuel * 12) + " / an") +
       (refCGI ? ligne("Référence", refCGI) : "") +

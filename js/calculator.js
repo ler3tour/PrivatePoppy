@@ -103,10 +103,11 @@
     }
 
     const coutCredit = emprunt > 0 ? mensualite * n - emprunt : 0;
+    const regimeAmorti = ["lmnp-reel", "sci-is", "sarl-ir"].indexOf(f.regime) !== -1;
 
     return {
       coutTotal, emprunt, mensualite, mensualiteHorsAssu, mensualiteAssu,
-      coutCredit, loyerAnnuel, chargesAnnuelles,
+      coutCredit, loyerAnnuel, chargesAnnuelles, amortissement, regimeAmorti,
       impots, brute, nette, netteNette, cashflowMensuel, projection,
       prixM2: f.prix / f.surface
     };
@@ -152,6 +153,9 @@
     $("out-loyerannuel").textContent = fmtEur(r.loyerAnnuel);
     $("out-charges").textContent = fmtEur(r.chargesAnnuelles);
     $("out-impots").textContent = fmtEur(r.impots);
+    $("out-amortissement").textContent = r.regimeAmorti
+      ? fmtEur(r.amortissement) + " / an"
+      : "sans objet pour ce régime";
     $("out-effort").textContent = r.cashflowMensuel >= 0 ? "0 €" : fmtEur(-r.cashflowMensuel * 12) + " / an";
 
     dessinerProjection(r);
