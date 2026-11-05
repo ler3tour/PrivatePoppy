@@ -225,6 +225,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; }
 .stat-value.is-good { color: var(--good); }
 .stat-value.is-bad { color: var(--critical); }
 
+.val-pos { color: var(--good); font-weight: 600; }
+.val-neg { color: var(--critical); }
+
 /* ===================== Tables ===================== */
 .synth-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .synth-table td { padding: 7px 4px; border-bottom: 1px solid var(--grid-line); }

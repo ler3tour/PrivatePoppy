@@ -145,7 +145,13 @@
         capital = Math.max(0, capital - (mensualiteHorsAssu - interet));
       }
       cumul += cashflowMensuel * 12;
-      projection.push({ annee: annee, capitalRestant: capital, cashflowCumule: cumul });
+      projection.push({
+        annee: annee,
+        capitalRestant: capital,
+        cashflowCumule: cumul,
+        // Trésorerie réelle de l'opération : cash-flows cumulés moins la mise de départ.
+        tresorerie: cumul - f.apport
+      });
     }
 
     const coutCredit = emprunt > 0 ? mensualite * n - emprunt : 0;
@@ -219,7 +225,32 @@
     }
     $("out-effort").textContent = r.cashflowMensuel >= 0 ? "0 €" : fmtEur(-r.cashflowMensuel * 12) + " / an";
 
+    remplirTresorerie(f, r);
     dessinerProjection(r);
+  }
+
+  function remplirTresorerie(f, r) {
+    const table = $("tresorerie-table");
+    if (!table) return;
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+    const cashflowAnnuel = r.cashflowMensuel * 12;
+    let anneeRecuperation = null;
+    r.projection.forEach(function (p) {
+      if (anneeRecuperation === null && p.tresorerie >= 0) anneeRecuperation = p.annee;
+      const tr = document.createElement("tr");
+      const classeTreso = p.tresorerie >= 0 ? "val-pos" : "val-neg";
+      tr.innerHTML = "<td>Année " + p.annee + "</td>" +
+        "<td>" + fmtEur(cashflowAnnuel) + "</td>" +
+        "<td>" + fmtEur(p.cashflowCumule) + "</td>" +
+        "<td class=\"" + classeTreso + "\">" + fmtEur(p.tresorerie) + "</td>";
+      tbody.appendChild(tr);
+    });
+    $("tresorerie-note").textContent = "Trésorerie cumulée = cash-flows cumulés moins l'apport initial (" +
+      fmtEur(f.apport) + "). " +
+      (anneeRecuperation !== null
+        ? "La mise de départ est récupérée à l'année " + anneeRecuperation + "."
+        : "La mise de départ n'est pas récupérée sur la durée du prêt avec ces hypothèses.");
   }
 
   let dernierResultat = null;

@@ -56,7 +56,8 @@
     let projRows = "";
     r.projection.forEach(function (p) {
       projRows += "<tr><td>Année " + p.annee + "</td><td>" + fmtEur(p.capitalRestant) +
-        "</td><td>" + fmtEur(p.cashflowCumule) + "</td></tr>";
+        "</td><td>" + fmtEur(p.cashflowCumule) +
+        "</td><td class=\"" + (p.tresorerie >= 0 ? "pos" : "neg") + "\">" + fmtEur(p.tresorerie) + "</td></tr>";
     });
 
     return "<!DOCTYPE html>\n<html lang=\"fr\"><head><meta charset=\"UTF-8\">" +
@@ -76,7 +77,7 @@
       ".pos{color:#006300}.neg{color:#d03b3b}" +
       "table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}" +
       "td,th{padding:5px 8px;border-bottom:1px solid #e1e0d9;text-align:left}" +
-      "td:last-child,th:last-child,td:nth-child(2),th:nth-child(2){text-align:right;font-variant-numeric:tabular-nums}" +
+      "td:last-child,th:last-child,td:nth-child(2),th:nth-child(2),td:nth-child(3),th:nth-child(3){text-align:right;font-variant-numeric:tabular-nums}" +
       "tr:nth-child(even){background:#f9f9f7}" +
       "footer{margin-top:26px;padding-top:12px;border-top:1px solid #e1e0d9;color:#898781;font-size:11px}" +
       ".print-btn{position:fixed;top:14px;right:14px;background:#2a78d6;color:#fff;border:none;border-radius:8px;" +
@@ -150,7 +151,9 @@
       blocZone() +
 
       "<h2>Projection sur la durée du prêt</h2>" +
-      "<table><tr><th></th><th>Capital restant dû</th><th>Cash-flow cumulé</th></tr>" + projRows + "</table>" +
+      "<table><tr><th>Exercice</th><th>Capital restant dû</th><th>Cash-flow cumulé</th><th>Trésorerie cumulée</th></tr>" +
+      projRows + "</table>" +
+      "<p style=\"font-size:12px;color:#52514e;margin:4px 0 0\">Trésorerie cumulée = cash-flows cumulés moins l'apport initial (" + fmtEur(f.apport) + ").</p>" +
 
       "<footer>Rapport généré par SECAAimmo le " + date + ". Hypothèses constantes (loyer, charges, fiscalité) ; " +
       "fiscalité simplifiée, amortissements estimés. Ce document est une estimation d'aide à la décision et ne " +
