@@ -43,16 +43,23 @@
     };
   }
 
-  function calculerImpots(regime, tmi, loyerAnnuel, chargesDeductibles, interetsAn1) {
-    let base;
+  function calculerImpots(regime, tmi, loyerAnnuel, chargesDeductibles, interetsAn1, amortissement) {
+    const resultatAmorti = Math.max(0, loyerAnnuel - chargesDeductibles - interetsAn1 - amortissement);
     switch (regime) {
-      case "micro-foncier": base = loyerAnnuel * 0.70; break;
-      case "micro-bic": base = loyerAnnuel * 0.50; break;
-      case "foncier-reel": base = Math.max(0, loyerAnnuel - chargesDeductibles - interetsAn1); break;
-      case "lmnp-reel": return 0; // l'amortissement neutralise généralement le résultat imposable
-      default: base = loyerAnnuel;
+      case "micro-foncier":
+        return loyerAnnuel * 0.70 * (tmi + PS);
+      case "micro-bic":
+        return loyerAnnuel * 0.50 * (tmi + PS);
+      case "foncier-reel":
+        return Math.max(0, loyerAnnuel - chargesDeductibles - interetsAn1) * (tmi + PS);
+      case "lmnp-reel":
+      case "sarl-ir": // SARL de famille translucide : BIC réel amorti imposé à l'IR des associés
+        return resultatAmorti * (tmi + PS);
+      case "sci-is": // barème IS : 15 % jusqu'à 42 500 € de bénéfice, 25 % au-delà
+        return Math.min(resultatAmorti, 42500) * 0.15 + Math.max(0, resultatAmorti - 42500) * 0.25;
+      default:
+        return loyerAnnuel * (tmi + PS);
     }
-    return Math.max(0, base) * (tmi + PS);
   }
 
   function calculer(f) {
@@ -72,7 +79,10 @@
       loyerAnnuel * (f.gestionPct + f.gliPct);
 
     const interetsAn1 = emprunt * f.taux + emprunt * f.assu;
-    const impots = calculerImpots(f.regime, f.tmi, loyerAnnuel, chargesAnnuelles, interetsAn1);
+    // Amortissement comptable estimé (régimes amortis : LMNP réel, SARL IR, SCI IS) :
+    // 85 % du prix (terrain exclu) sur 30 ans, travaux sur 15 ans, mobilier sur 7 ans.
+    const amortissement = f.prix * 0.85 / 30 + f.travaux / 15 + f.mobilier / 7;
+    const impots = calculerImpots(f.regime, f.tmi, loyerAnnuel, chargesAnnuelles, interetsAn1, amortissement);
 
     const brute = f.loyer * 12 / coutTotal;
     const nette = (loyerAnnuel - chargesAnnuelles) / coutTotal;
@@ -92,8 +102,11 @@
       projection.push({ annee: annee, capitalRestant: capital, cashflowCumule: cumul });
     }
 
+    const coutCredit = emprunt > 0 ? mensualite * n - emprunt : 0;
+
     return {
-      coutTotal, emprunt, mensualite, loyerAnnuel, chargesAnnuelles,
+      coutTotal, emprunt, mensualite, mensualiteHorsAssu, mensualiteAssu,
+      coutCredit, loyerAnnuel, chargesAnnuelles,
       impots, brute, nette, netteNette, cashflowMensuel, projection,
       prixM2: f.prix / f.surface
     };
@@ -112,10 +125,17 @@
       ? "L'opération s'autofinance."
       : "Effort d'épargne mensuel requis.";
 
+    $("out-mensualite-tile").textContent = fmtEur(r.mensualite);
+    $("out-mensualite-detail").textContent = r.emprunt > 0
+      ? "dont assurance " + fmtEur(r.mensualiteAssu) + " · sur " + r.projection.length + " ans"
+      : "Achat comptant, pas d'emprunt.";
+
     $("out-cout").textContent = fmtEur(r.coutTotal);
     $("out-prixm2").textContent = fmtEur(r.prixM2) + " / m²";
     $("out-emprunt").textContent = fmtEur(r.emprunt);
     $("out-mensualite").textContent = fmtEur(r.mensualite) + " / mois";
+    $("out-mensualite-split").textContent = fmtEur(r.mensualiteHorsAssu) + " / " + fmtEur(r.mensualiteAssu);
+    $("out-coutcredit").textContent = fmtEur(r.coutCredit);
     $("out-loyerannuel").textContent = fmtEur(r.loyerAnnuel);
     $("out-charges").textContent = fmtEur(r.chargesAnnuelles);
     $("out-impots").textContent = fmtEur(r.impots);
