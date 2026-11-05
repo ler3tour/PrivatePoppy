@@ -43,6 +43,14 @@
     const f = etat.f, r = etat.r;
     const date = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
     const regimeLabel = sansCadratin(document.querySelector("#in-regime option:checked").textContent);
+    // Références vérifiées sur Légifrance (versions en vigueur).
+    const REFS_CGI = {
+      "micro-foncier": "art. 32 du CGI (abattement 30 %, plafond 15 000 €)",
+      "micro-bic": "art. 50-0 du CGI (abattement 50 %, plafond 83 600 € en meublé de longue durée)",
+      "sci-is": "art. 219 du CGI (IS 15 % jusqu'à 42 500 € de bénéfice, puis 25 %)",
+      "sarl-ir": "art. 239 bis AA du CGI (option des SARL de famille pour l'IR)"
+    };
+    const refCGI = REFS_CGI[f.regime];
     const typeLabel = document.querySelector("#in-neuf option:checked").textContent;
 
     let projRows = "";
@@ -59,6 +67,7 @@
       "header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #2a78d6;" +
       "padding-bottom:10px;margin-bottom:18px;flex-wrap:wrap;gap:6px}" +
       "h1{font-size:20px;margin:0;color:#1c5cab}h2{font-size:15px;margin:22px 0 8px;color:#1c5cab}" +
+      ".marque{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#52514e;margin:0 0 2px}" +
       ".date{color:#52514e;font-size:13px}" +
       ".kpis{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}" +
       ".kpi{flex:1;min-width:150px;border:1px solid #e1e0d9;border-radius:10px;padding:10px 12px}" +
@@ -74,8 +83,9 @@
       "padding:10px 16px;font:inherit;font-weight:600;cursor:pointer}" +
       "@media print{.print-btn{display:none}body{padding:0}}" +
       "</style></head><body>" +
-      "<button class=\"print-btn\" onclick=\"window.print()\">🖨️ Imprimer / PDF</button>" +
-      "<header><h1>🏠 SECAAimmo · Rapport de rentabilité locative</h1><span class=\"date\">" + date + "</span></header>" +
+      "<button class=\"print-btn\" onclick=\"window.print()\">Imprimer / PDF</button>" +
+      "<header><div><p class=\"marque\">SECAAimmo</p><h1>Rapport de rentabilité locative</h1></div>" +
+      "<span class=\"date\">" + date + "</span></header>" +
 
       "<div class=\"kpis\">" +
       "<div class=\"kpi\"><span>Rentabilité brute</span><b>" + fmtPct(r.brute) + "</b></div>" +
@@ -123,6 +133,7 @@
       ligne("Tranche marginale d'imposition", (f.tmi * 100).toLocaleString("fr-FR") + " %") +
       ligne("Impôts + prélèvements sociaux", fmtEur(r.impots)) +
       ligne("Effort d'épargne annuel", r.cashflowMensuel >= 0 ? "0 €" : fmtEur(-r.cashflowMensuel * 12) + " / an") +
+      (refCGI ? ligne("Référence", refCGI) : "") +
       "</table>" +
 
       blocZone() +

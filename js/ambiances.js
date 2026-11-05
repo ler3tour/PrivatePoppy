@@ -137,7 +137,7 @@
     if (!visibles.length) {
       const note = document.createElement("p");
       note.className = "empty-note";
-      note.textContent = "Aucune ambiance ne combine ces tags — retire un filtre ou crée la tienne juste en dessous ✨";
+      note.textContent = "Aucune ambiance ne combine ces tags. Retire un filtre, ou crée la tienne juste en dessous.";
       grid.appendChild(note);
       return;
     }

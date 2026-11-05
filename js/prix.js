@@ -96,7 +96,7 @@
       dvfCourant = mutations;
       afficherDVF(commune, mutations);
     }).catch(function () {
-      $("dvf-note").textContent = "Base DVF injoignable pour cette commune — prix indicatifs du département affichés à la place.";
+      $("dvf-note").textContent = "Base DVF injoignable pour cette commune : les prix indicatifs du département sont affichés à la place.";
       afficherGraphiqueFallback(commune);
     });
   }
@@ -104,8 +104,8 @@
   function afficherFallbackDepartement(commune) {
     const dep = PRIX_DEPARTEMENTS[commune.codeDepartement];
     if (!dep) return;
-    $("prix-appart-label").textContent = "Appartement — prix indicatif (" + dep.nom + ")";
-    $("prix-maison-label").textContent = "Maison — prix indicatif (" + dep.nom + ")";
+    $("prix-appart-label").textContent = "Appartement · prix indicatif (" + dep.nom + ")";
+    $("prix-maison-label").textContent = "Maison · prix indicatif (" + dep.nom + ")";
     $("prix-appart").textContent = fmtEur(dep.appartement) + " / m²";
     $("prix-maison").textContent = fmtEur(dep.maison) + " / m²";
     $("prix-appart-src").textContent = "Moyenne départementale, indicatif 2025";
@@ -120,12 +120,12 @@
     const medMaison = mediane(maisons.map(function (m) { return m.prixM2; }));
 
     if (medAppart) {
-      $("prix-appart-label").textContent = "Appartement — prix médian (" + commune.nom + ")";
+      $("prix-appart-label").textContent = "Appartement · prix médian (" + commune.nom + ")";
       $("prix-appart").textContent = fmtEur(medAppart) + " / m²";
       $("prix-appart-src").textContent = apparts.length + " ventes DVF";
     }
     if (medMaison) {
-      $("prix-maison-label").textContent = "Maison — prix médian (" + commune.nom + ")";
+      $("prix-maison-label").textContent = "Maison · prix médian (" + commune.nom + ")";
       $("prix-maison").textContent = fmtEur(medMaison) + " / m²";
       $("prix-maison-src").textContent = maisons.length + " ventes DVF";
     }
@@ -165,7 +165,7 @@
         return { label: a, value: Math.round(mediane(parAnneeM[a])) };
       });
     }
-    $("prix-chart-titre").textContent = "Prix médian par année — " + serieType.toLowerCase() + " (" + commune.nom + ")";
+    $("prix-chart-titre").textContent = "Prix médian par année, " + serieType.toLowerCase() + " (" + commune.nom + ")";
     $("prix-chart-note").textContent = "Médiane € / m² calculée sur les ventes DVF de la commune.";
     if (items.length) {
       PoppyCharts.barChart($("chart-prix"), {
@@ -179,15 +179,15 @@
   function afficherGraphiqueFallback(commune) {
     const dep = PRIX_DEPARTEMENTS[commune.codeDepartement];
     if (!dep) return;
-    $("prix-chart-titre").textContent = "Repères — " + dep.nom + " vs France";
+    $("prix-chart-titre").textContent = "Repères : " + dep.nom + " vs France";
     $("prix-chart-note").textContent = "Prix indicatifs € / m² (2025).";
     const franceAppart = 3100, franceMaison = 2400;
     PoppyCharts.barChart($("chart-prix"), {
       items: [
-        { label: "Appart. — " + dep.nom, value: dep.appartement, highlight: true },
-        { label: "Appart. — France", value: franceAppart },
-        { label: "Maison — " + dep.nom, value: dep.maison, highlight: true },
-        { label: "Maison — France", value: franceMaison }
+        { label: "Appart. " + dep.nom, value: dep.appartement, highlight: true },
+        { label: "Appart. France", value: franceAppart },
+        { label: "Maison " + dep.nom, value: dep.maison, highlight: true },
+        { label: "Maison France", value: franceMaison }
       ],
       color: getComputedStyle(document.documentElement).getPropertyValue("--series-1").trim(),
       formatV: function (v) { return fmtEur(v) + " / m²"; }

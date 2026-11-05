@@ -125,6 +125,19 @@
       ? "L'opération s'autofinance."
       : "Effort d'épargne mensuel requis.";
 
+    // Plafonds des régimes micro (art. 32 et 50-0 du CGI).
+    const alerte = $("fiscal-alerte");
+    if (alerte) {
+      let message = "";
+      if (f.regime === "micro-foncier" && r.loyerAnnuel > 15000) {
+        message = "Loyers au-dessus de 15 000 € par an : le micro-foncier ne s'applique plus (art. 32 du CGI), le régime réel prend le relais.";
+      } else if (f.regime === "micro-bic" && r.loyerAnnuel > 83600) {
+        message = "Recettes au-dessus de 83 600 € par an : le micro-BIC ne s'applique plus en meublé de longue durée (art. 50-0 du CGI), le régime réel prend le relais.";
+      }
+      alerte.textContent = message;
+      alerte.hidden = !message;
+    }
+
     $("out-mensualite-tile").textContent = fmtEur(r.mensualite);
     $("out-mensualite-detail").textContent = r.emprunt > 0
       ? "dont assurance " + fmtEur(r.mensualiteAssu) + " · sur " + r.projection.length + " ans"

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SECAAimmo — Studio d'investissement immobilier</title>
+  <title>SECAAimmo · Studio d'investissement immobilier</title>
   <meta name="description" content="Calculs de rentabilité locative, prix immobiliers sur zone et création d'ambiances déco par style.">
   <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
@@ -136,10 +136,10 @@
             <label class="field">
               <span>Régime fiscal</span>
               <select id="in-regime">
-                <option value="micro-foncier">Location nue — micro-foncier (abattement 30 %)</option>
-                <option value="foncier-reel">Location nue — frais réels</option>
-                <option value="micro-bic" selected>LMNP — micro-BIC (abattement 50 %)</option>
-                <option value="lmnp-reel">LMNP — réel avec amortissement</option>
+                <option value="micro-foncier">Location nue : micro-foncier (abattement 30 %)</option>
+                <option value="foncier-reel">Location nue : frais réels</option>
+                <option value="micro-bic" selected>LMNP : micro-BIC (abattement 50 %)</option>
+                <option value="lmnp-reel">LMNP : réel avec amortissement</option>
                 <option value="sci-is">SCI à l'IS (amortissement, IS 15 % / 25 %)</option>
                 <option value="sarl-ir">SARL de famille à l'IR (meublé, réel amorti)</option>
               </select>
@@ -155,7 +155,8 @@
               </select>
             </label>
           </div>
-          <p class="hint">Prélèvements sociaux de 17,2 % inclus pour les régimes à l'IR. SCI à l'IS : barème IS 15 % (jusqu'à 42 500 € de bénéfice) puis 25 % ; l'imposition des dividendes en cas de distribution n'est pas modélisée. Amortissement estimé : 85 % du prix sur 30 ans, travaux sur 15 ans, mobilier sur 7 ans.</p>
+          <p class="hint hint-alerte" id="fiscal-alerte" hidden></p>
+          <p class="hint">Prélèvements sociaux de 17,2 % inclus pour les régimes à l'IR. Plafonds de recettes annuelles : 15 000 € pour le micro-foncier (art. 32 du CGI), 83 600 € pour le micro-BIC en meublé de longue durée (art. 50-0 du CGI). SCI à l'IS : 15 % jusqu'à 42 500 € de bénéfice puis 25 % (art. 219 du CGI), imposition des dividendes non modélisée. SARL de famille : option pour l'IR de l'art. 239 bis AA du CGI. Amortissement estimé : 85 % du prix sur 30 ans, travaux sur 15 ans, mobilier sur 7 ans.</p>
         </div>
 
         <div class="results-col">
@@ -203,11 +204,11 @@
           </div>
 
           <div class="card">
-            <h2>📄 Rapport de l'opération</h2>
+            <h2>Rapport de l'opération</h2>
             <p class="hint">Génère un rapport complet (bien, financement, fiscalité, projection, prix de zone si consultés) à conserver ou partager. Depuis l'aperçu, « Imprimer / PDF » permet de l'enregistrer en PDF.</p>
             <div class="creator-actions">
-              <button id="rapport-telecharger" class="btn btn-primary">⬇️ Télécharger le rapport</button>
-              <button id="rapport-apercu" class="btn">👁️ Aperçu &amp; impression</button>
+              <button id="rapport-telecharger" class="btn btn-primary">Télécharger le rapport</button>
+              <button id="rapport-apercu" class="btn">Aperçu et impression</button>
             </div>
           </div>
 
@@ -234,12 +235,12 @@
       <div id="prix-resultats" hidden>
         <div class="stat-row">
           <div class="stat-tile">
-            <span class="stat-label" id="prix-appart-label">Appartement — prix médian</span>
+            <span class="stat-label" id="prix-appart-label">Appartement · prix médian</span>
             <span class="stat-value" id="prix-appart">—</span>
             <span class="stat-delta" id="prix-appart-src"></span>
           </div>
           <div class="stat-tile">
-            <span class="stat-label" id="prix-maison-label">Maison — prix médian</span>
+            <span class="stat-label" id="prix-maison-label">Maison · prix médian</span>
             <span class="stat-value" id="prix-maison">—</span>
             <span class="stat-delta" id="prix-maison-src"></span>
           </div>
@@ -272,7 +273,7 @@
       </div>
 
       <div class="card">
-        <h2>Repères nationaux — grandes villes (€ / m², appartement, indicatif)</h2>
+        <h2>Repères nationaux : grandes villes (€ / m², appartement, indicatif)</h2>
         <div id="chart-villes" class="chart-host chart-host-tall"></div>
         <p class="hint">Ordres de grandeur indicatifs (2025) destinés à situer une zone, pas à estimer un bien précis.</p>
       </div>
@@ -282,14 +283,14 @@
     <section id="panel-ambiances" class="panel" role="tabpanel" hidden>
       <div class="card">
         <h2>Explorer par tags</h2>
-        <p class="hint">Filtre les ambiances à la manière des tags Pinterest — clique pour combiner.</p>
+        <p class="hint">Filtre les ambiances à la manière des tags Pinterest : clique sur un ou plusieurs tags pour les combiner.</p>
         <div id="tag-cloud" class="tag-cloud"></div>
       </div>
 
       <div id="ambiance-grid" class="ambiance-grid"></div>
 
       <div class="card" id="creator-card">
-        <h2>✨ Créer mon ambiance</h2>
+        <h2>Créer mon ambiance</h2>
         <div class="field-grid">
           <label class="field">
             <span>Nom de l'ambiance</span>
@@ -321,7 +322,7 @@
   </main>
 
   <footer class="footer">
-    <p>SECAAimmo — outil d'aide à la décision. Les résultats sont des estimations et ne constituent pas un conseil financier, fiscal ou immobilier.</p>
+    <p>SECAAimmo est un outil d'aide à la décision : les résultats sont des estimations et ne constituent pas un conseil financier, fiscal ou immobilier.</p>
   </footer>
 
   <script src="js/data-prix.js"></script>
