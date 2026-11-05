@@ -4,6 +4,7 @@ Application web pour l'investissement locatif : calcul de rentabilité, prix imm
 
 ## Rentabilité locative
 
+- Analyse d'annonce : coller le lien ou le texte d'une annonce remplit le calculateur (prix, surface, type, code postal) et estime le loyer avec des loyers indicatifs au m² par département, inspirés de la carte des loyers publique. Les grands sites d'annonces bloquant la lecture de leurs pages par un site tiers, le texte collé reste la voie fiable.
 - Coût d'opération : prix, frais de notaire (7,5 % dans l'ancien, 2,5 % dans le neuf, modifiables), travaux, mobilier.
 - Financement par annuités : apport, taux, durée, assurance emprunteur. L'application affiche la mensualité, sa part d'assurance et le coût total du crédit.
 - Charges : copropriété, taxe foncière, assurance PNO, entretien, gestion locative, garantie loyers impayés, vacance locative.

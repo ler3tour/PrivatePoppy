@@ -165,6 +165,19 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; }
 .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .field > span, .field-label { font-size: 0.78rem; color: var(--text-secondary); }
 
+.field textarea {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--page);
+  color: var(--text-primary);
+  resize: vertical;
+}
+.field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.annonce-ok { color: var(--good); }
+
 .field input, .field select {
   font: inherit;
   padding: 8px 10px;

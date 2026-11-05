@@ -40,6 +40,17 @@
     <section id="panel-renta" class="panel is-active" role="tabpanel">
       <div class="panel-grid">
         <div class="card form-card">
+          <h2>Analyser une annonce</h2>
+          <label class="field">
+            <span>Lien de l'annonce, ou texte copié de l'annonce</span>
+            <textarea id="annonce-input" rows="3" placeholder="Colle ici l'URL (https://…) ou, plus fiable, le texte de l'annonce : « Appartement T2 de 45 m² à Bordeaux (33000), 150 000 €… »"></textarea>
+          </label>
+          <div class="creator-actions">
+            <button id="annonce-analyser" class="btn btn-primary">Analyser et remplir le calculateur</button>
+          </div>
+          <div id="annonce-resultat" hidden></div>
+          <p class="hint">L'app détecte prix, surface, type et code postal, puis estime le loyer avec les loyers indicatifs au m² du département (inspirés de la carte des loyers publique). Les grands sites d'annonces bloquent la lecture directe de leurs pages : si le lien ne suffit pas, colle le texte de l'annonce.</p>
+
           <h2>Le bien</h2>
           <div class="field-grid">
             <label class="field">
@@ -423,10 +434,12 @@
   </footer>
 
   <script src="js/data-prix.js"></script>
+  <script src="js/data-loyers.js"></script>
   <script src="js/data-ambiances.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/calculator.js"></script>
   <script src="js/prix.js"></script>
+  <script src="js/annonce.js"></script>
   <script src="js/rapport.js"></script>
   <script src="js/ambiances.js"></script>
   <script src="js/app.js"></script>
