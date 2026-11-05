@@ -156,7 +156,90 @@
             </label>
           </div>
           <p class="hint hint-alerte" id="fiscal-alerte" hidden></p>
-          <p class="hint">Prélèvements sociaux de 17,2 % inclus pour les régimes à l'IR. Plafonds de recettes annuelles : 15 000 € pour le micro-foncier (art. 32 du CGI), 83 600 € pour le micro-BIC en meublé de longue durée (art. 50-0 du CGI). SCI à l'IS : 15 % jusqu'à 42 500 € de bénéfice puis 25 % (art. 219 du CGI), imposition des dividendes non modélisée. SARL de famille : option pour l'IR de l'art. 239 bis AA du CGI. Amortissement estimé : 85 % du prix sur 30 ans, travaux sur 15 ans, mobilier sur 7 ans.</p>
+          <p class="hint">Prélèvements sociaux de 17,2 % inclus pour les régimes à l'IR. Plafonds de recettes annuelles : 15 000 € pour le micro-foncier (art. 32 du CGI), 83 600 € pour le micro-BIC en meublé de longue durée (art. 50-0 du CGI). SCI à l'IS : 15 % jusqu'à 42 500 € de bénéfice puis 25 % (art. 219 du CGI), imposition des dividendes non modélisée. SARL de famille : option pour l'IR de l'art. 239 bis AA du CGI.</p>
+
+          <h2>L'amortissement (régimes au réel amorti)</h2>
+          <div class="field-grid">
+            <label class="field">
+              <span>Méthode</span>
+              <select id="in-amort-mode">
+                <option value="simple" selected>Estimation simple (bâti 85 % sur 30 ans)</option>
+                <option value="composants">Par composants (pratique comptable)</option>
+              </select>
+            </label>
+          </div>
+          <div id="amort-composants" hidden>
+            <table class="amort-table">
+              <thead><tr><th>Composant</th><th>Part du prix</th><th>Durée</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Terrain (non amortissable)</td>
+                  <td><input type="number" id="in-pct-terrain" value="15" min="0" max="100" step="1"> %</td>
+                  <td>–</td>
+                </tr>
+                <tr>
+                  <td>Gros œuvre</td>
+                  <td><input type="number" id="in-pct-gros" value="45" min="0" max="100" step="1"> %</td>
+                  <td><select id="in-duree-gros">
+                    <option value="40">40 ans</option>
+                    <option value="50" selected>50 ans</option>
+                    <option value="60">60 ans</option>
+                    <option value="80">80 ans</option>
+                  </select></td>
+                </tr>
+                <tr>
+                  <td>Façade et étanchéité</td>
+                  <td><input type="number" id="in-pct-facade" value="10" min="0" max="100" step="1"> %</td>
+                  <td><select id="in-duree-facade">
+                    <option value="20">20 ans</option>
+                    <option value="25" selected>25 ans</option>
+                    <option value="30">30 ans</option>
+                    <option value="40">40 ans</option>
+                  </select></td>
+                </tr>
+                <tr>
+                  <td>Installations techniques (électricité, plomberie, chauffage)</td>
+                  <td><input type="number" id="in-pct-igt" value="15" min="0" max="100" step="1"> %</td>
+                  <td><select id="in-duree-igt">
+                    <option value="15">15 ans</option>
+                    <option value="20" selected>20 ans</option>
+                    <option value="25">25 ans</option>
+                  </select></td>
+                </tr>
+                <tr>
+                  <td>Agencements intérieurs</td>
+                  <td><input type="number" id="in-pct-agencement" value="15" min="0" max="100" step="1"> %</td>
+                  <td><select id="in-duree-agencement">
+                    <option value="10">10 ans</option>
+                    <option value="12" selected>12 ans</option>
+                    <option value="15">15 ans</option>
+                    <option value="18">18 ans</option>
+                  </select></td>
+                </tr>
+                <tr>
+                  <td>Travaux</td>
+                  <td>montant saisi plus haut</td>
+                  <td><select id="in-duree-travaux">
+                    <option value="5">5 ans</option>
+                    <option value="10">10 ans</option>
+                    <option value="15" selected>15 ans</option>
+                    <option value="20">20 ans</option>
+                  </select></td>
+                </tr>
+                <tr>
+                  <td>Mobilier</td>
+                  <td>montant saisi plus haut</td>
+                  <td><select id="in-duree-mobilier">
+                    <option value="5">5 ans</option>
+                    <option value="7" selected>7 ans</option>
+                    <option value="10">10 ans</option>
+                  </select></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="hint" id="amort-total-note"></p>
+          </div>
+          <p class="hint">L'estimation simple amortit 85 % du prix (terrain exclu) sur 30 ans, les travaux sur 15 ans et le mobilier sur 7 ans. Le mode par composants reproduit la pratique comptable : chaque composant du bâti a sa propre durée. Utilisé par les régimes LMNP réel, SARL de famille et SCI à l'IS.</p>
         </div>
 
         <div class="results-col">

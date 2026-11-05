@@ -39,8 +39,55 @@
       duree: Math.max(1, Math.round(num("in-duree"))),
       assu: num("in-assu") / 100,
       regime: $("in-regime").value,
-      tmi: num("in-tmi") / 100
+      tmi: num("in-tmi") / 100,
+      amortMode: $("in-amort-mode").value,
+      pctTerrain: num("in-pct-terrain"),
+      pctGros: num("in-pct-gros"),
+      dureeGros: num("in-duree-gros"),
+      pctFacade: num("in-pct-facade"),
+      dureeFacade: num("in-duree-facade"),
+      pctIgt: num("in-pct-igt"),
+      dureeIgt: num("in-duree-igt"),
+      pctAgencement: num("in-pct-agencement"),
+      dureeAgencement: num("in-duree-agencement"),
+      dureeTravaux: num("in-duree-travaux"),
+      dureeMobilier: num("in-duree-mobilier")
     };
+  }
+
+  function calculerAmortissement(f) {
+    if (f.amortMode !== "composants") {
+      // Estimation simple : 85 % du prix (terrain exclu) sur 30 ans.
+      return {
+        total: f.prix * 0.85 / 30 + f.travaux / 15 + f.mobilier / 7,
+        detail: []
+      };
+    }
+    const composants = [
+      { label: "Gros œuvre", pct: f.pctGros, duree: f.dureeGros },
+      { label: "Façade et étanchéité", pct: f.pctFacade, duree: f.dureeFacade },
+      { label: "Installations techniques", pct: f.pctIgt, duree: f.dureeIgt },
+      { label: "Agencements intérieurs", pct: f.pctAgencement, duree: f.dureeAgencement }
+    ];
+    let total = 0;
+    const detail = [];
+    composants.forEach(function (c) {
+      if (c.pct <= 0 || c.duree <= 0) return;
+      const dotation = f.prix * c.pct / 100 / c.duree;
+      total += dotation;
+      detail.push({ label: c.label + " (" + c.pct + " % du prix sur " + c.duree + " ans)", dotation: dotation });
+    });
+    if (f.travaux > 0 && f.dureeTravaux > 0) {
+      const dotation = f.travaux / f.dureeTravaux;
+      total += dotation;
+      detail.push({ label: "Travaux (sur " + f.dureeTravaux + " ans)", dotation: dotation });
+    }
+    if (f.mobilier > 0 && f.dureeMobilier > 0) {
+      const dotation = f.mobilier / f.dureeMobilier;
+      total += dotation;
+      detail.push({ label: "Mobilier (sur " + f.dureeMobilier + " ans)", dotation: dotation });
+    }
+    return { total: total, detail: detail };
   }
 
   function calculerImpots(regime, tmi, loyerAnnuel, chargesDeductibles, interetsAn1, amortissement) {
@@ -79,9 +126,8 @@
       loyerAnnuel * (f.gestionPct + f.gliPct);
 
     const interetsAn1 = emprunt * f.taux + emprunt * f.assu;
-    // Amortissement comptable estimé (régimes amortis : LMNP réel, SARL IR, SCI IS) :
-    // 85 % du prix (terrain exclu) sur 30 ans, travaux sur 15 ans, mobilier sur 7 ans.
-    const amortissement = f.prix * 0.85 / 30 + f.travaux / 15 + f.mobilier / 7;
+    const amort = calculerAmortissement(f);
+    const amortissement = amort.total;
     const impots = calculerImpots(f.regime, f.tmi, loyerAnnuel, chargesAnnuelles, interetsAn1, amortissement);
 
     const brute = f.loyer * 12 / coutTotal;
@@ -108,6 +154,7 @@
     return {
       coutTotal, emprunt, mensualite, mensualiteHorsAssu, mensualiteAssu,
       coutCredit, loyerAnnuel, chargesAnnuelles, amortissement, regimeAmorti,
+      amortDetail: amort.detail,
       impots, brute, nette, netteNette, cashflowMensuel, projection,
       prixM2: f.prix / f.surface
     };
@@ -156,6 +203,20 @@
     $("out-amortissement").textContent = r.regimeAmorti
       ? fmtEur(r.amortissement) + " / an"
       : "sans objet pour ce régime";
+
+    // Contrôle de la répartition du prix en mode composants.
+    const note = $("amort-total-note");
+    if (note) {
+      if (f.amortMode === "composants") {
+        const totalPct = f.pctTerrain + f.pctGros + f.pctFacade + f.pctIgt + f.pctAgencement;
+        note.textContent = "Répartition du prix : " + totalPct.toLocaleString("fr-FR") + " %" +
+          (Math.round(totalPct) === 100 ? "." : " (ajuste les parts pour atteindre 100 %).");
+        note.classList.toggle("hint-alerte", Math.round(totalPct) !== 100);
+      } else {
+        note.textContent = "";
+        note.classList.remove("hint-alerte");
+      }
+    }
     $("out-effort").textContent = r.cashflowMensuel >= 0 ? "0 €" : fmtEur(-r.cashflowMensuel * 12) + " / an";
 
     dessinerProjection(r);
@@ -203,6 +264,9 @@
   document.addEventListener("DOMContentLoaded", function () {
     ["in-prix", "in-neuf"].forEach(function (id) {
       $(id).addEventListener("input", function () { majNotaireAuto(); recalculer(); });
+    });
+    $("in-amort-mode").addEventListener("input", function () {
+      $("amort-composants").hidden = this.value !== "composants";
     });
     document.querySelectorAll("#panel-renta input, #panel-renta select").forEach(function (input) {
       input.addEventListener("input", recalculer);

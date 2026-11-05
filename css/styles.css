@@ -233,6 +233,26 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; }
 
 .table-scroll { overflow-x: auto; max-height: 320px; overflow-y: auto; }
 
+.amort-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-top: 4px; }
+.amort-table th {
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--axis);
+}
+.amort-table td { padding: 6px 4px; border-bottom: 1px solid var(--grid-line); color: var(--text-secondary); }
+.amort-table input, .amort-table select {
+  font: inherit;
+  font-size: 0.83rem;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--page);
+  color: var(--text-primary);
+}
+.amort-table input { width: 64px; }
+
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .data-table th {
   text-align: left;
