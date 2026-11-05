@@ -4,7 +4,7 @@
  * - APIs externes (geo.api.gouv.fr, DVF) : réseau uniquement — jamais mises en
  *   cache, l'app a déjà son propre repli sur les données embarquées.
  */
-const CACHE = "secaaimmo-v3";
+const CACHE = "secaaimmo-v4";
 
 const SHELL = [
   "./",
@@ -16,6 +16,7 @@ const SHELL = [
   "./js/charts.js",
   "./js/calculator.js",
   "./js/prix.js",
+  "./js/rapport.js",
   "./js/ambiances.js",
   "./js/app.js",
   "./icons/icon-192.png",

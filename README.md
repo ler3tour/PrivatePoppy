@@ -8,7 +8,8 @@ Application web autonome (HTML / CSS / JavaScript pur, aucune installation) qui 
 - Financement : apport, taux, durée, assurance emprunteur → mensualité par annuités.
 - Charges réelles : copropriété, taxe foncière, PNO, entretien, gestion locative, GLI, vacance locative.
 - Fiscalité simplifiée : micro-foncier, foncier au réel, LMNP micro-BIC, LMNP réel (amortissement), SARL de famille à l'IR (meublé réel amorti) — avec TMI + 17,2 % de prélèvements sociaux — et SCI à l'IS (amortissement, barème IS 15 % / 25 %).
-- Résultats : rentabilité **brute**, **nette de charges**, **nette-nette** (après impôts), **cash-flow mensuel**, et projection graphique sur la durée du prêt (capital restant dû vs cash-flow cumulé).
+- Résultats : rentabilité **brute**, **nette de charges**, **nette-nette** (après impôts), **cash-flow mensuel**, mensualité détaillée, et projection graphique sur la durée du prêt (capital restant dû vs cash-flow cumulé).
+- **Rapport téléchargeable** : fichier HTML autonome reprenant toute l'opération (bien, financement, fiscalité, projection année par année, prix de zone consultés), imprimable en PDF depuis le navigateur.
 
 ## 📍 Prix sur zone
 

@@ -145,6 +145,7 @@
   }
 
   let dernierResultat = null;
+  let dernierFormulaire = null;
 
   function dessinerProjection(r) {
     dernierResultat = r;
@@ -172,6 +173,7 @@
 
   function recalculer() {
     const f = lireFormulaire();
+    dernierFormulaire = f;
     afficher(f, calculer(f));
   }
 
@@ -196,5 +198,8 @@
     recalculer();
   });
 
-  window.PoppyCalc = { redessiner: function () { dessinerProjection(dernierResultat); } };
+  window.PoppyCalc = {
+    redessiner: function () { dessinerProjection(dernierResultat); },
+    etat: function () { return { f: dernierFormulaire, r: dernierResultat }; }
+  };
 })();

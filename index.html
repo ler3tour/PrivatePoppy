@@ -203,6 +203,15 @@
           </div>
 
           <div class="card">
+            <h2>📄 Rapport de l'opération</h2>
+            <p class="hint">Génère un rapport complet (bien, financement, fiscalité, projection, prix de zone si consultés) à conserver ou partager. Depuis l'aperçu, « Imprimer / PDF » permet de l'enregistrer en PDF.</p>
+            <div class="creator-actions">
+              <button id="rapport-telecharger" class="btn btn-primary">⬇️ Télécharger le rapport</button>
+              <button id="rapport-apercu" class="btn">👁️ Aperçu &amp; impression</button>
+            </div>
+          </div>
+
+          <div class="card">
             <h2>Projection sur la durée du prêt</h2>
             <div id="chart-projection" class="chart-host" aria-label="Graphique de projection : capital restant dû et cash-flow cumulé par année"></div>
             <p class="hint">Hypothèses constantes (loyer, charges, fiscalité). Le cash-flow cumulé n'intègre pas la revalorisation du bien ni l'indexation des loyers.</p>
@@ -320,6 +329,7 @@
   <script src="js/charts.js"></script>
   <script src="js/calculator.js"></script>
   <script src="js/prix.js"></script>
+  <script src="js/rapport.js"></script>
   <script src="js/ambiances.js"></script>
   <script src="js/app.js"></script>
 </body>
