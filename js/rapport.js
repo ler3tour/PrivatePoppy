@@ -12,6 +12,10 @@
   const esc = function (s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   };
+  // Le rapport est rédigé sans cadratins ; on nettoie aussi les libellés repris de l'app.
+  const sansCadratin = function (s) {
+    return String(s).replace(/\s*—\s*/g, " ");
+  };
 
   function ligne(label, valeur) {
     return "<tr><td>" + esc(label) + "</td><td>" + esc(valeur) + "</td></tr>";
@@ -22,9 +26,9 @@
     const resultats = document.getElementById("prix-resultats");
     if (!resultats || resultats.hidden) return "";
     const commune = document.getElementById("prix-commune").textContent;
-    const appartLabel = document.getElementById("prix-appart-label").textContent;
+    const appartLabel = sansCadratin(document.getElementById("prix-appart-label").textContent);
     const appart = document.getElementById("prix-appart").textContent;
-    const maisonLabel = document.getElementById("prix-maison-label").textContent;
+    const maisonLabel = sansCadratin(document.getElementById("prix-maison-label").textContent);
     const maison = document.getElementById("prix-maison").textContent;
     return "<h2>Prix sur zone</h2><table>" +
       ligne("Commune consultée", commune) +
@@ -38,7 +42,7 @@
     if (!etat || !etat.r) return null;
     const f = etat.f, r = etat.r;
     const date = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-    const regimeLabel = document.querySelector("#in-regime option:checked").textContent;
+    const regimeLabel = sansCadratin(document.querySelector("#in-regime option:checked").textContent);
     const typeLabel = document.querySelector("#in-neuf option:checked").textContent;
 
     let projRows = "";
@@ -49,7 +53,7 @@
 
     return "<!DOCTYPE html>\n<html lang=\"fr\"><head><meta charset=\"UTF-8\">" +
       "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
-      "<title>Rapport SECAAimmo — " + date + "</title><style>" +
+      "<title>Rapport SECAAimmo du " + date + "</title><style>" +
       "body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0b0b0b;background:#fff;" +
       "max-width:760px;margin:0 auto;padding:28px 22px;line-height:1.5;font-size:14px}" +
       "header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #2a78d6;" +
@@ -71,7 +75,7 @@
       "@media print{.print-btn{display:none}body{padding:0}}" +
       "</style></head><body>" +
       "<button class=\"print-btn\" onclick=\"window.print()\">🖨️ Imprimer / PDF</button>" +
-      "<header><h1>🏠 SECAAimmo — Rapport de rentabilité locative</h1><span class=\"date\">" + date + "</span></header>" +
+      "<header><h1>🏠 SECAAimmo · Rapport de rentabilité locative</h1><span class=\"date\">" + date + "</span></header>" +
 
       "<div class=\"kpis\">" +
       "<div class=\"kpi\"><span>Rentabilité brute</span><b>" + fmtPct(r.brute) + "</b></div>" +
