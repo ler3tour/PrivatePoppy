@@ -46,7 +46,25 @@
 
     // PWA : le service worker rend l'app installable et utilisable hors-ligne.
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
-      navigator.serviceWorker.register("sw.js").catch(function () {
+      // iOS garde l'app en mémoire : si un nouveau service worker prend la main,
+      // on recharge une fois pour afficher la nouvelle version immédiatement.
+      const avaitDejaUnSW = !!navigator.serviceWorker.controller;
+      let rechargementFait = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (!avaitDejaUnSW || rechargementFait) return;
+        rechargementFait = true;
+        location.reload();
+      });
+
+      navigator.serviceWorker.register("sw.js").then(function (reg) {
+        // Au retour au premier plan (app reprise depuis la mémoire sur iOS),
+        // on force la vérification de mise à jour.
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") {
+            reg.update().catch(function () {});
+          }
+        });
+      }).catch(function () {
         /* hors HTTPS (ou navigateur ancien) : l'app fonctionne sans installation */
       });
     }
